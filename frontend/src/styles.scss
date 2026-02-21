@@ -3,19 +3,23 @@
 @use '@nebular/theme/styles/themes' as nbThemes; /* registers default/dark/cosmic/corporate */
 @use '@nebular/theme/styles/globals' as ng;
 
-/* Custom themes to approximate ngx-admin material-dark */
+// Use built-in themes (dark + default) and override a few values for closer ngx-admin look.
+nb.$nb-enable-css-custom-properties: true;
+
 $nb-themes: nb.nb-register-theme((
+  // dark tweaks
   layout-background-color: #0f1322,
   sidebar-background-color: #151a30,
   card-background-color: #151a30,
   text-basic-color: #e3e9f2,
   text-hint-color: #8f9bb3,
   shadow: 0 0.5rem 1rem 0 #1a1f33,
-), material-dark, dark);
+), dark, dark);
 
 $nb-themes: nb.nb-register-theme((
+  // light tweaks
   layout-background-color: #f7f9fc,
-), material-light, default);
+), default, default);
 
 @include nb.nb-install();
 @include ng.nb-theme-global();

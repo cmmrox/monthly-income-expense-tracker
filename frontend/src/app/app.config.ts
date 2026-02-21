@@ -24,7 +24,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(),
 
     importProvidersFrom(
-      NbThemeModule.forRoot({ name: 'material-dark' }),
+      NbThemeModule.forRoot({ name: 'dark' }),
       NbLayoutModule,
       NbSidebarModule.forRoot(),
       NbMenuModule.forRoot(),

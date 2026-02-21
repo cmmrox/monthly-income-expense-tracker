@@ -38,8 +38,8 @@ import { NbThemeService } from '@nebular/theme';
           <div class="spacer"></div>
 
           <nb-select size="small" [selected]="theme" (selectedChange)="setTheme($event)">
-            <nb-option value="material-dark">Dark</nb-option>
-            <nb-option value="material-light">Light</nb-option>
+            <nb-option value="dark">Dark</nb-option>
+            <nb-option value="default">Light</nb-option>
           </nb-select>
 
           <nb-actions size="small">
@@ -85,7 +85,15 @@ import { NbThemeService } from '@nebular/theme';
 export class AppLayoutComponent {
   private themeService = inject(NbThemeService);
 
-  theme: 'material-dark' | 'material-light' = (localStorage.getItem('theme') as any) || 'material-dark';
+  theme: 'dark' | 'default' = this.normalizeTheme(localStorage.getItem('theme'));
+
+  private normalizeTheme(value: string | null): 'dark' | 'default' {
+    // Migration from previous theme names.
+    if (value === 'material-dark') return 'dark';
+    if (value === 'material-light') return 'default';
+    if (value === 'default') return 'default';
+    return 'dark';
+  }
 
   menu = [
     {
@@ -120,7 +128,7 @@ export class AppLayoutComponent {
     this.themeService.changeTheme(this.theme);
   }
 
-  setTheme(theme: 'material-dark' | 'material-light') {
+  setTheme(theme: 'dark' | 'default') {
     this.theme = theme;
     localStorage.setItem('theme', theme);
 
