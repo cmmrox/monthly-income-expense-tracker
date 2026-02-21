@@ -17,7 +17,9 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  private readonly baseUrl = 'http://localhost:8080/api';
+  // In Docker Compose we serve the Angular app via Nginx and proxy /api -> backend.
+  // In local dev you can use an Angular proxy config to forward /api to http://localhost:8080.
+  private readonly baseUrl = '/api';
 
   constructor(private http: HttpClient) {}
 

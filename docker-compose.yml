@@ -26,5 +26,14 @@ services:
     ports:
       - "8080:8080"
 
+  frontend:
+    build:
+      context: ./frontend
+    container_name: mit-frontend
+    depends_on:
+      - backend
+    ports:
+      - "4200:80"
+
 volumes:
   mit_pg_data:
