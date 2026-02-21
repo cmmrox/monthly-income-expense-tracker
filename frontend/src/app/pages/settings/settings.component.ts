@@ -1,50 +1,56 @@
 import { Component, inject } from '@angular/core';
 import { AsyncPipe, NgIf } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
 import { ApiService } from '../../core/api.service';
 import { map, tap } from 'rxjs';
+
+import { NbCardModule, NbInputModule, NbButtonModule } from '@nebular/theme';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [
-    NgIf,
-    AsyncPipe,
-    ReactiveFormsModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-  ],
+  imports: [NgIf, AsyncPipe, ReactiveFormsModule, NbCardModule, NbInputModule, NbButtonModule],
   template: `
-    <mat-card>
-      <div style="font-weight: 600; margin-bottom: 12px;">Settings</div>
+    <nb-card>
+      <nb-card-header>Settings</nb-card-header>
+      <nb-card-body>
+        <form class="form" [formGroup]="form" (ngSubmit)="save()">
+          <label>
+            Base currency
+            <input nbInput fullWidth formControlName="baseCurrency" placeholder="LKR" />
+          </label>
 
-      <form class="form" [formGroup]="form" (ngSubmit)="save()">
-        <mat-form-field appearance="outline">
-          <mat-label>Base currency</mat-label>
-          <input matInput formControlName="baseCurrency" placeholder="LKR" />
-        </mat-form-field>
+          <label>
+            Period start day
+            <input nbInput fullWidth type="number" min="1" max="28" formControlName="periodStartDay" />
+            <small class="hint">Salary cycle start day (1–28). Example: 25</small>
+          </label>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Period start day</mat-label>
-          <input matInput type="number" formControlName="periodStartDay" min="1" max="28" />
-          <mat-hint>Salary cycle start day (e.g., 25). Allowed: 1–28</mat-hint>
-        </mat-form-field>
+          <button nbButton status="primary" [disabled]="form.invalid">Save</button>
 
-        <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid">Save</button>
-      </form>
-
-      <div *ngIf="saved" style="margin-top: 12px; opacity: 0.8;">Saved.</div>
-    </mat-card>
+          <div *ngIf="saved" class="saved">Saved.</div>
+        </form>
+      </nb-card-body>
+    </nb-card>
   `,
   styles: [
     `
-      .form { display: grid; gap: 12px; max-width: 420px; }
+      .form {
+        display: grid;
+        gap: 14px;
+        max-width: 420px;
+      }
+      label {
+        display: grid;
+        gap: 6px;
+      }
+      .hint {
+        opacity: 0.7;
+      }
+      .saved {
+        margin-top: 6px;
+        opacity: 0.85;
+      }
     `,
   ],
 })
@@ -66,19 +72,18 @@ export class SettingsComponent {
         periodStartDay: r.data.periodStartDay,
       });
     }),
-    map((r) => r.data)
+    map((r) => r.data),
   );
 
   constructor() {
-    // trigger load
     this.vm$.subscribe();
   }
 
   save() {
     this.saved = false;
     const v = this.form.getRawValue();
-    this.api
-      .patchSettings({ baseCurrency: v.baseCurrency!, periodStartDay: Number(v.periodStartDay) })
-      .subscribe(() => (this.saved = true));
+    this.api.patchSettings({ baseCurrency: v.baseCurrency!, periodStartDay: Number(v.periodStartDay) }).subscribe(() => {
+      this.saved = true;
+    });
   }
 }

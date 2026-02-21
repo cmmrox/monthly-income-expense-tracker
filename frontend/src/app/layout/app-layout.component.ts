@@ -1,82 +1,125 @@
-import { Component } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
-import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatIconModule } from '@angular/material/icon';
-import { MatListModule } from '@angular/material/list';
-import { MatButtonModule } from '@angular/material/button';
+import { Component, inject } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+import {
+  NbLayoutModule,
+  NbSidebarModule,
+  NbMenuModule,
+  NbActionsModule,
+  NbSelectModule,
+  NbIconModule,
+  NbUserModule,
+  NbButtonModule,
+} from '@nebular/theme';
+import { NbThemeService } from '@nebular/theme';
 
 @Component({
   selector: 'app-layout',
   standalone: true,
   imports: [
     RouterOutlet,
-    RouterLink,
-    RouterLinkActive,
-    MatSidenavModule,
-    MatToolbarModule,
-    MatIconModule,
-    MatListModule,
-    MatButtonModule,
+    NbLayoutModule,
+    NbSidebarModule,
+    NbMenuModule,
+    NbActionsModule,
+    NbSelectModule,
+    NbIconModule,
+    NbUserModule,
+    NbButtonModule,
   ],
   template: `
-    <mat-sidenav-container class="shell">
-      <mat-sidenav mode="side" opened class="sidenav">
-        <div class="profile">
-          <div class="avatar"></div>
-          <div class="name">Charith</div>
-          <div class="sub">Income & Expense Tracker</div>
+    <nb-layout>
+      <nb-layout-header fixed>
+        <div class="header">
+          <button nbButton ghost status="basic" (click)="toggleSidebar()">
+            <nb-icon icon="menu-2-outline"></nb-icon>
+          </button>
+          <div class="brand">Monthly Tracker</div>
+
+          <div class="spacer"></div>
+
+          <nb-select size="small" [selected]="theme" (selectedChange)="setTheme($event)">
+            <nb-option value="material-dark">Dark</nb-option>
+            <nb-option value="material-light">Light</nb-option>
+          </nb-select>
+
+          <nb-actions size="small">
+            <nb-action icon="bell-outline"></nb-action>
+            <nb-action icon="email-outline"></nb-action>
+            <nb-action>
+              <nb-user size="small" name="Charith"></nb-user>
+            </nb-action>
+          </nb-actions>
         </div>
+      </nb-layout-header>
 
-        <mat-nav-list>
-          <a mat-list-item routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-            <mat-icon matListItemIcon>home</mat-icon>
-            <span matListItemTitle>Home</span>
-          </a>
-          <a mat-list-item routerLink="/transactions" routerLinkActive="active">
-            <mat-icon matListItemIcon>receipt_long</mat-icon>
-            <span matListItemTitle>Transactions</span>
-          </a>
-          <a mat-list-item routerLink="/settings" routerLinkActive="active">
-            <mat-icon matListItemIcon>settings</mat-icon>
-            <span matListItemTitle>Settings</span>
-          </a>
-        </mat-nav-list>
+      <nb-sidebar tag="menu-sidebar" class="menu-sidebar" responsive>
+        <nb-menu [items]="menu"></nb-menu>
+      </nb-sidebar>
 
-        <div class="spacer"></div>
-        <div class="footer">
-          <small>MIT • MVP</small>
-        </div>
-      </mat-sidenav>
-
-      <mat-sidenav-content>
-        <mat-toolbar color="primary" class="toolbar">
-          <span>Monthly Tracker</span>
-          <span class="fill"></span>
-          <button mat-button routerLink="/transactions">Add</button>
-        </mat-toolbar>
-
-        <div class="content">
-          <router-outlet />
-        </div>
-      </mat-sidenav-content>
-    </mat-sidenav-container>
+      <nb-layout-column>
+        <router-outlet />
+      </nb-layout-column>
+    </nb-layout>
   `,
   styles: [
     `
-      .shell { height: 100vh; }
-      .sidenav { width: 260px; background: #121212; color: #eaeaea; }
-      .toolbar { position: sticky; top: 0; z-index: 10; }
-      .content { padding: 16px; }
-      .fill { flex: 1 1 auto; }
-      .profile { padding: 16px; display: grid; gap: 4px; }
-      .avatar { width: 48px; height: 48px; border-radius: 50%; background: #2d2d2d; }
-      .name { font-weight: 600; }
-      .sub { opacity: 0.7; font-size: 12px; }
-      .spacer { flex: 1; height: 24px; }
-      .footer { padding: 12px 16px; opacity: 0.6; }
-      a.active { background: rgba(255,255,255,0.08); border-radius: 8px; margin: 0 8px; }
+      .header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+      }
+      .brand {
+        font-weight: 600;
+        letter-spacing: 0.2px;
+      }
+      .spacer {
+        flex: 1 1 auto;
+      }
+      nb-layout-column {
+        padding: 1.25rem;
+      }
     `,
   ],
 })
-export class AppLayoutComponent {}
+export class AppLayoutComponent {
+  private themeService = inject(NbThemeService);
+
+  theme: 'material-dark' | 'material-light' = (localStorage.getItem('theme') as any) || 'material-dark';
+
+  menu = [
+    {
+      title: 'Home',
+      icon: 'home-outline',
+      link: '/',
+      home: true,
+    },
+    {
+      title: 'Transactions',
+      icon: 'repeat-outline',
+      link: '/transactions',
+    },
+    {
+      title: 'Settings',
+      icon: 'settings-2-outline',
+      link: '/settings',
+    },
+  ];
+
+  constructor() {
+    this.themeService.changeTheme(this.theme);
+  }
+
+  setTheme(theme: 'material-dark' | 'material-light') {
+    this.theme = theme;
+    localStorage.setItem('theme', theme);
+    this.themeService.changeTheme(theme);
+  }
+
+  toggleSidebar() {
+    // Nebular provides sidebar service, but simplest: dispatch a click on sidebar toggle.
+    // We'll use the service in next refinement pass.
+    const event = new CustomEvent('toggle-sidebar', { bubbles: true });
+    window.dispatchEvent(event);
+  }
+}

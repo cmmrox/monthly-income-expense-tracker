@@ -1,15 +1,17 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { AsyncPipe, CurrencyPipe, DatePipe, NgFor, NgIf } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatButtonModule } from '@angular/material/button';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatTableModule } from '@angular/material/table';
+
+import {
+  NbCardModule,
+  NbTabsetModule,
+  NbInputModule,
+  NbSelectModule,
+  NbButtonModule,
+  NbSpinnerModule,
+} from '@nebular/theme';
+
 import { ApiService } from '../../core/api.service';
-import { AccountResponse, CategoryResponse } from '../../core/api.models';
 import { BehaviorSubject, combineLatest, map, switchMap } from 'rxjs';
 
 @Component({
@@ -22,184 +24,162 @@ import { BehaviorSubject, combineLatest, map, switchMap } from 'rxjs';
     DatePipe,
     CurrencyPipe,
     ReactiveFormsModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatButtonModule,
-    MatTabsModule,
-    MatTableModule,
+    NbCardModule,
+    NbTabsetModule,
+    NbInputModule,
+    NbSelectModule,
+    NbButtonModule,
+    NbSpinnerModule,
   ],
   template: `
-    <mat-card>
-      <mat-tab-group>
-        <mat-tab label="Expense">
-          <form class="form" [formGroup]="expenseForm" (ngSubmit)="submitExpense()">
-            <div class="row">
-              <mat-form-field appearance="outline">
-                <mat-label>Date (ISO)</mat-label>
-                <input matInput formControlName="txnDate" placeholder="2026-02-25T10:00:00Z" />
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>Amount</mat-label>
-                <input matInput type="number" formControlName="amount" />
-              </mat-form-field>
+    <nb-card>
+      <nb-card-header>New Transaction</nb-card-header>
+      <nb-card-body>
+        <nb-tabset>
+          <nb-tab tabTitle="Expense">
+            <form class="form" [formGroup]="expenseForm" (ngSubmit)="submitExpense()">
+              <div class="row">
+                <input nbInput fullWidth placeholder="Date ISO (e.g. 2026-02-25T10:00:00Z)" formControlName="txnDate" />
+                <input nbInput fullWidth type="number" placeholder="Amount" formControlName="amount" />
+              </div>
+              <div class="row">
+                <nb-select fullWidth placeholder="Account" formControlName="accountId">
+                  <nb-option *ngFor="let a of accounts$ | async" [value]="a.id">{{ a.name }}</nb-option>
+                </nb-select>
+                <nb-select fullWidth placeholder="Category" formControlName="categoryId">
+                  <nb-option *ngFor="let c of expenseCategories$ | async" [value]="c.id">{{ c.name }}</nb-option>
+                </nb-select>
+              </div>
+              <input nbInput fullWidth placeholder="Description" formControlName="description" />
+              <button nbButton status="primary" [disabled]="expenseForm.invalid">Save Expense</button>
+            </form>
+          </nb-tab>
+
+          <nb-tab tabTitle="Income">
+            <form class="form" [formGroup]="incomeForm" (ngSubmit)="submitIncome()">
+              <div class="row">
+                <input nbInput fullWidth placeholder="Date ISO (e.g. 2026-02-25T09:00:00Z)" formControlName="txnDate" />
+                <input nbInput fullWidth type="number" placeholder="Amount" formControlName="amount" />
+              </div>
+              <div class="row">
+                <nb-select fullWidth placeholder="Account" formControlName="accountId">
+                  <nb-option *ngFor="let a of accounts$ | async" [value]="a.id">{{ a.name }}</nb-option>
+                </nb-select>
+                <nb-select fullWidth placeholder="Category" formControlName="categoryId">
+                  <nb-option *ngFor="let c of incomeCategories$ | async" [value]="c.id">{{ c.name }}</nb-option>
+                </nb-select>
+              </div>
+              <input nbInput fullWidth placeholder="Description" formControlName="description" />
+              <button nbButton status="primary" [disabled]="incomeForm.invalid">Save Income</button>
+            </form>
+          </nb-tab>
+
+          <nb-tab tabTitle="Transfer">
+            <form class="form" [formGroup]="transferForm" (ngSubmit)="submitTransfer()">
+              <div class="row">
+                <input nbInput fullWidth placeholder="Date ISO (e.g. 2026-02-25T10:00:00Z)" formControlName="txnDate" />
+                <input nbInput fullWidth type="number" placeholder="Amount" formControlName="amount" />
+              </div>
+              <div class="row">
+                <nb-select fullWidth placeholder="From" formControlName="fromAccountId">
+                  <nb-option *ngFor="let a of accounts$ | async" [value]="a.id">{{ a.name }}</nb-option>
+                </nb-select>
+                <nb-select fullWidth placeholder="To" formControlName="toAccountId">
+                  <nb-option *ngFor="let a of accounts$ | async" [value]="a.id">{{ a.name }}</nb-option>
+                </nb-select>
+              </div>
+              <input nbInput fullWidth placeholder="Description" formControlName="description" />
+              <button nbButton status="primary" [disabled]="transferForm.invalid">Save Transfer</button>
+            </form>
+          </nb-tab>
+        </nb-tabset>
+      </nb-card-body>
+    </nb-card>
+
+    <nb-card>
+      <nb-card-header>
+        <div class="header">
+          <div>Transactions (current period)</div>
+          <button nbButton size="small" status="basic" (click)="reload()">Reload</button>
+        </div>
+      </nb-card-header>
+      <nb-card-body>
+        <ng-container *ngIf="txns$ | async as txns; else loading">
+          <div class="table">
+            <div class="row head">
+              <div>Date</div>
+              <div>Type</div>
+              <div>Amount</div>
+              <div>Account</div>
+              <div>Category</div>
+              <div>Description</div>
             </div>
-
-            <div class="row">
-              <mat-form-field appearance="outline">
-                <mat-label>Account</mat-label>
-                <mat-select formControlName="accountId">
-                  <mat-option *ngFor="let a of accounts$ | async" [value]="a.id">{{ a.name }}</mat-option>
-                </mat-select>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Category</mat-label>
-                <mat-select formControlName="categoryId">
-                  <mat-option *ngFor="let c of expenseCategories$ | async" [value]="c.id">{{ c.name }}</mat-option>
-                </mat-select>
-              </mat-form-field>
+            <div class="row" *ngFor="let t of txns">
+              <div>{{ t.txnDate | date: 'MMM d, HH:mm' }}</div>
+              <div>{{ t.type }}</div>
+              <div>{{ t.amount | currency: 'LKR' }}</div>
+              <div>{{ t.account?.name || (t.fromAccount?.name + ' → ' + t.toAccount?.name) }}</div>
+              <div>{{ t.category?.name || '-' }}</div>
+              <div>{{ t.description || '-' }}</div>
             </div>
-
-            <mat-form-field appearance="outline" class="full">
-              <mat-label>Description</mat-label>
-              <input matInput formControlName="description" />
-            </mat-form-field>
-
-            <button mat-raised-button color="primary" type="submit" [disabled]="expenseForm.invalid">Save Expense</button>
-          </form>
-        </mat-tab>
-
-        <mat-tab label="Income">
-          <form class="form" [formGroup]="incomeForm" (ngSubmit)="submitIncome()">
-            <div class="row">
-              <mat-form-field appearance="outline">
-                <mat-label>Date (ISO)</mat-label>
-                <input matInput formControlName="txnDate" placeholder="2026-02-25T09:00:00Z" />
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>Amount</mat-label>
-                <input matInput type="number" formControlName="amount" />
-              </mat-form-field>
-            </div>
-
-            <div class="row">
-              <mat-form-field appearance="outline">
-                <mat-label>Account</mat-label>
-                <mat-select formControlName="accountId">
-                  <mat-option *ngFor="let a of accounts$ | async" [value]="a.id">{{ a.name }}</mat-option>
-                </mat-select>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Category</mat-label>
-                <mat-select formControlName="categoryId">
-                  <mat-option *ngFor="let c of incomeCategories$ | async" [value]="c.id">{{ c.name }}</mat-option>
-                </mat-select>
-              </mat-form-field>
-            </div>
-
-            <mat-form-field appearance="outline" class="full">
-              <mat-label>Description</mat-label>
-              <input matInput formControlName="description" />
-            </mat-form-field>
-
-            <button mat-raised-button color="primary" type="submit" [disabled]="incomeForm.invalid">Save Income</button>
-          </form>
-        </mat-tab>
-
-        <mat-tab label="Transfer">
-          <form class="form" [formGroup]="transferForm" (ngSubmit)="submitTransfer()">
-            <div class="row">
-              <mat-form-field appearance="outline">
-                <mat-label>Date (ISO)</mat-label>
-                <input matInput formControlName="txnDate" placeholder="2026-02-25T10:00:00Z" />
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>Amount</mat-label>
-                <input matInput type="number" formControlName="amount" />
-              </mat-form-field>
-            </div>
-
-            <div class="row">
-              <mat-form-field appearance="outline">
-                <mat-label>From</mat-label>
-                <mat-select formControlName="fromAccountId">
-                  <mat-option *ngFor="let a of accounts$ | async" [value]="a.id">{{ a.name }}</mat-option>
-                </mat-select>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>To</mat-label>
-                <mat-select formControlName="toAccountId">
-                  <mat-option *ngFor="let a of accounts$ | async" [value]="a.id">{{ a.name }}</mat-option>
-                </mat-select>
-              </mat-form-field>
-            </div>
-
-            <mat-form-field appearance="outline" class="full">
-              <mat-label>Description</mat-label>
-              <input matInput formControlName="description" />
-            </mat-form-field>
-
-            <button mat-raised-button color="primary" type="submit" [disabled]="transferForm.invalid">Save Transfer</button>
-          </form>
-        </mat-tab>
-      </mat-tab-group>
-    </mat-card>
-
-    <mat-card style="margin-top: 12px;">
-      <div class="row" style="align-items: center;">
-        <div style="font-weight: 600;">Transactions (current period)</div>
-        <span style="flex: 1;"></span>
-        <button mat-stroked-button (click)="reload()">Reload</button>
-      </div>
-
-      <table mat-table [dataSource]="(txns$ | async) ?? []" class="table">
-        <ng-container matColumnDef="date">
-          <th mat-header-cell *matHeaderCellDef>Date</th>
-          <td mat-cell *matCellDef="let t">{{ t.txnDate | date: 'MMM d, HH:mm' }}</td>
+            <div *ngIf="txns.length === 0" class="empty">No transactions yet.</div>
+          </div>
         </ng-container>
-        <ng-container matColumnDef="type">
-          <th mat-header-cell *matHeaderCellDef>Type</th>
-          <td mat-cell *matCellDef="let t">{{ t.type }}</td>
-        </ng-container>
-        <ng-container matColumnDef="amount">
-          <th mat-header-cell *matHeaderCellDef>Amount</th>
-          <td mat-cell *matCellDef="let t">{{ t.amount | currency: 'LKR' }}</td>
-        </ng-container>
-        <ng-container matColumnDef="account">
-          <th mat-header-cell *matHeaderCellDef>Account</th>
-          <td mat-cell *matCellDef="let t">{{ t.account?.name || t.fromAccount?.name + ' → ' + t.toAccount?.name }}</td>
-        </ng-container>
-        <ng-container matColumnDef="category">
-          <th mat-header-cell *matHeaderCellDef>Category</th>
-          <td mat-cell *matCellDef="let t">{{ t.category?.name || '-' }}</td>
-        </ng-container>
-        <ng-container matColumnDef="desc">
-          <th mat-header-cell *matHeaderCellDef>Description</th>
-          <td mat-cell *matCellDef="let t">{{ t.description || '-' }}</td>
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="cols"></tr>
-        <tr mat-row *matRowDef="let row; columns: cols"></tr>
-      </table>
-    </mat-card>
+        <ng-template #loading>
+          <nb-spinner status="basic"></nb-spinner>
+        </ng-template>
+      </nb-card-body>
+    </nb-card>
   `,
   styles: [
     `
-      .form { padding: 16px; display: grid; gap: 12px; }
-      .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-      .full { width: 100%; }
-      .table { width: 100%; margin-top: 12px; }
-      @media (max-width: 900px) {
-        .row { grid-template-columns: 1fr; }
+      .form {
+        display: grid;
+        gap: 12px;
+        padding: 12px 0;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+      }
+      .table {
+        display: grid;
+        gap: 8px;
+      }
+      .table .row {
+        grid-template-columns: 1.2fr 0.7fr 0.8fr 1fr 1fr 1.2fr;
+        padding: 8px 10px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .table .row.head {
+        background: transparent;
+        font-weight: 600;
+        opacity: 0.8;
+      }
+      .empty {
+        padding: 10px;
+        opacity: 0.7;
+      }
+      @media (max-width: 1000px) {
+        .table .row {
+          grid-template-columns: 1fr;
+        }
+        .row {
+          grid-template-columns: 1fr;
+        }
       }
     `,
   ],
 })
-export class TransactionsComponent implements OnInit {
+export class TransactionsComponent {
   private api = inject(ApiService);
   private fb = inject(FormBuilder);
 
@@ -209,30 +189,28 @@ export class TransactionsComponent implements OnInit {
   expenseCategories$ = this.api.listCategories('EXPENSE').pipe(map((r) => r.data));
   incomeCategories$ = this.api.listCategories('INCOME').pipe(map((r) => r.data));
 
-  cols = ['date', 'type', 'amount', 'account', 'category', 'desc'];
-
   expenseForm = this.fb.group({
-    txnDate: ['' as string, [Validators.required]],
+    txnDate: ['', [Validators.required]],
     amount: [null as number | null, [Validators.required, Validators.min(0.01)]],
-    accountId: ['' as string, [Validators.required]],
-    categoryId: ['' as string, [Validators.required]],
-    description: ['' as string],
+    accountId: ['', [Validators.required]],
+    categoryId: ['', [Validators.required]],
+    description: [''],
   });
 
   incomeForm = this.fb.group({
-    txnDate: ['' as string, [Validators.required]],
+    txnDate: ['', [Validators.required]],
     amount: [null as number | null, [Validators.required, Validators.min(0.01)]],
-    accountId: ['' as string, [Validators.required]],
-    categoryId: ['' as string, [Validators.required]],
-    description: ['' as string],
+    accountId: ['', [Validators.required]],
+    categoryId: ['', [Validators.required]],
+    description: [''],
   });
 
   transferForm = this.fb.group({
-    txnDate: ['' as string, [Validators.required]],
+    txnDate: ['', [Validators.required]],
     amount: [null as number | null, [Validators.required, Validators.min(0.01)]],
-    fromAccountId: ['' as string, [Validators.required]],
-    toAccountId: ['' as string, [Validators.required]],
-    description: ['' as string],
+    fromAccountId: ['', [Validators.required]],
+    toAccountId: ['', [Validators.required]],
+    description: [''],
   });
 
   txns$ = this.reload$.pipe(
@@ -242,10 +220,10 @@ export class TransactionsComponent implements OnInit {
       const to = `${p.data.periodEnd}T23:59:59Z`;
       return this.api.listTransactions({ from, to, page: 0, size: 50 });
     }),
-    map((r) => r.data.items)
+    map((r) => r.data.items),
   );
 
-  ngOnInit(): void {
+  constructor() {
     const nowIso = new Date().toISOString();
     this.expenseForm.patchValue({ txnDate: nowIso });
     this.incomeForm.patchValue({ txnDate: nowIso });
