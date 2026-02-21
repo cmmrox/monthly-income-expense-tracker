@@ -107,12 +107,30 @@ export class AppLayoutComponent {
   ];
 
   constructor() {
+    // Ensure body has the theme class on first load.
+    const body = document.body;
+    const classes = Array.from(body.classList);
+    if (!classes.some((c) => c === `nb-theme-${this.theme}`)) {
+      classes
+        .filter((c) => c.startsWith('nb-theme-'))
+        .forEach((c) => body.classList.remove(c));
+      body.classList.add(`nb-theme-${this.theme}`);
+    }
+
     this.themeService.changeTheme(this.theme);
   }
 
   setTheme(theme: 'material-dark' | 'material-light') {
     this.theme = theme;
     localStorage.setItem('theme', theme);
+
+    // Force the theme class on body to avoid any cases where it doesn't get applied.
+    const body = document.body;
+    Array.from(body.classList)
+      .filter((c) => c.startsWith('nb-theme-'))
+      .forEach((c) => body.classList.remove(c));
+    body.classList.add(`nb-theme-${theme}`);
+
     this.themeService.changeTheme(theme);
   }
 
