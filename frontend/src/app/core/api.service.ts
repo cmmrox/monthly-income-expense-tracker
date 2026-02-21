@@ -21,6 +21,19 @@ export class ApiService {
 
   constructor(private http: HttpClient) {}
 
+  // Me
+  me(): Observable<ApiEnvelope<{ id: string; baseCurrency: string; periodStartDay: number; createdAt: string; updatedAt: string }>> {
+    return this.http.get<ApiEnvelope<{ id: string; baseCurrency: string; periodStartDay: number; createdAt: string; updatedAt: string }>>(
+      `${this.baseUrl}/me`
+    );
+  }
+
+  patchSettings(payload: { baseCurrency: string; periodStartDay: number }): Observable<ApiEnvelope<{ id: string; baseCurrency: string; periodStartDay: number; createdAt: string; updatedAt: string }>> {
+    return this.http.patch<
+      ApiEnvelope<{ id: string; baseCurrency: string; periodStartDay: number; createdAt: string; updatedAt: string }>
+    >(`${this.baseUrl}/me/settings`, payload);
+  }
+
   // Accounts
   listAccounts(): Observable<ApiEnvelope<AccountResponse[]>> {
     return this.http.get<ApiEnvelope<AccountResponse[]>>(`${this.baseUrl}/accounts`);

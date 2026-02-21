@@ -33,3 +33,22 @@ mvn test
 Notes:
 - Tests use **H2**.
 - Runtime uses **PostgreSQL** in Docker Compose.
+
+## Run (Frontend)
+From `frontend/`:
+
+```bash
+npm install
+npm start
+```
+
+Then open:
+- http://localhost:4200
+
+### Frontend tests (headless VM)
+Requires `chromium-headless` installed.
+
+```bash
+cd frontend
+npm run test:ci
+```

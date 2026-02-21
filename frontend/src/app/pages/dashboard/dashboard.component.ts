@@ -108,5 +108,6 @@ export class DashboardComponent {
           recent: recent.data,
         }))
       )
+    )
   );
 }

@@ -156,7 +156,7 @@ import { BehaviorSubject, combineLatest, map, switchMap } from 'rxjs';
         <button mat-stroked-button (click)="reload()">Reload</button>
       </div>
 
-      <table mat-table [dataSource]="txns$ | async" class="table">
+      <table mat-table [dataSource]="(txns$ | async) ?? []" class="table">
         <ng-container matColumnDef="date">
           <th mat-header-cell *matHeaderCellDef>Date</th>
           <td mat-cell *matCellDef="let t">{{ t.txnDate | date: 'MMM d, HH:mm' }}</td>

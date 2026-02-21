@@ -6,7 +6,8 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "test:ci": "CHROME_BIN=/usr/lib64/chromium-browser/headless_shell ng test --watch=false"
   },
   "private": true,
   "dependencies": {
