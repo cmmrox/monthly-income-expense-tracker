@@ -9,10 +9,11 @@ public class WebConfig implements WebMvcConfigurer {
 
   @Override
   public void addCorsMappings(CorsRegistry registry) {
+    // When running behind the frontend Nginx reverse proxy (docker-compose), the browser origin
+    // will be the frontend host (e.g. http://<vm-ip>:4200). Allow origin patterns for simplicity.
+    // If you later add auth, tighten this list.
     registry.addMapping("/api/**")
-        .allowedOrigins(
-            "http://localhost:4200",
-            "http://127.0.0.1:4200")
+        .allowedOriginPatterns("*")
         .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
         .allowedHeaders("*")
         .allowCredentials(false);
