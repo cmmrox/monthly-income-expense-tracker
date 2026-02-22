@@ -1,6 +1,5 @@
 package com.cmm.mit.controller;
 
-import com.cmm.mit.dto.ApiEnvelope;
 import com.cmm.mit.dto.TransactionDtos;
 import com.cmm.mit.service.TxnService;
 import jakarta.validation.Valid;
@@ -10,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,17 +20,17 @@ public class TransactionController {
   private final TxnService service;
 
   @PostMapping
-  public ApiEnvelope<TransactionDtos.TxnResponse> create(@Valid @RequestBody TransactionDtos.CreateTxnRequest request) {
-    return ApiEnvelope.ok(service.create(request));
+  public ResponseEntity<TransactionDtos.TxnResponse> create(@Valid @RequestBody TransactionDtos.CreateTxnRequest request) {
+    return ResponseEntity.ok(service.create(request));
   }
 
   @PostMapping("/transfer")
-  public ApiEnvelope<TransactionDtos.TxnResponse> transfer(@Valid @RequestBody TransactionDtos.CreateTransferRequest request) {
-    return ApiEnvelope.ok(service.transfer(request));
+  public ResponseEntity<TransactionDtos.TxnResponse> transfer(@Valid @RequestBody TransactionDtos.CreateTransferRequest request) {
+    return ResponseEntity.ok(service.transfer(request));
   }
 
   @GetMapping
-  public ApiEnvelope<TransactionDtos.PageResponse<TransactionDtos.TxnResponse>> list(
+  public ResponseEntity<TransactionDtos.PageResponse<TransactionDtos.TxnResponse>> list(
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
       @RequestParam(required = false) com.cmm.mit.domain.enums.TransactionType type,
@@ -43,17 +43,17 @@ public class TransactionController {
   ) {
     var direction = dir.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
     var pageable = PageRequest.of(page, size, Sort.by(direction, sort));
-    return ApiEnvelope.ok(service.search(from, to, type, accountId, categoryId, pageable));
+    return ResponseEntity.ok(service.search(from, to, type, accountId, categoryId, pageable));
   }
 
   @GetMapping("/{id}")
-  public ApiEnvelope<TransactionDtos.TxnResponse> get(@PathVariable UUID id) {
-    return ApiEnvelope.ok(service.get(id));
+  public ResponseEntity<TransactionDtos.TxnResponse> get(@PathVariable UUID id) {
+    return ResponseEntity.ok(service.get(id));
   }
 
   @DeleteMapping("/{id}")
-  public ApiEnvelope<java.util.Map<String, Object>> delete(@PathVariable UUID id) {
+  public ResponseEntity<java.util.Map<String, Object>> delete(@PathVariable UUID id) {
     service.delete(id);
-    return ApiEnvelope.ok(java.util.Map.of("ok", true));
+    return ResponseEntity.ok(java.util.Map.of("ok", true));
   }
 }
