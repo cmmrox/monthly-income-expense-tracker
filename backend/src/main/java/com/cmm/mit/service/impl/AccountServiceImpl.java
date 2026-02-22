@@ -1,7 +1,9 @@
 package com.cmm.mit.service.impl;
 
 import com.cmm.mit.domain.entity.Account;
-import com.cmm.mit.dto.AccountDtos;
+import com.cmm.mit.dto.AccountResponse;
+import com.cmm.mit.dto.CreateAccountRequest;
+import com.cmm.mit.dto.UpdateAccountRequest;
 import com.cmm.mit.exception.NotFoundException;
 import com.cmm.mit.mapper.AccountMapper;
 import com.cmm.mit.repo.AccountRepo;
@@ -23,9 +25,9 @@ public class AccountServiceImpl implements AccountService {
   private final AccountMapper mapper;
 
   @Override
-  public List<AccountDtos.AccountResponse> listActive() {
+  public List<AccountResponse> listActive() {
     log.info("AccountService.listActive() start");
-    List<AccountDtos.AccountResponse> result = repo.findAllByActiveTrueOrderByNameAsc().stream()
+    List<AccountResponse> result = repo.findAllByActiveTrueOrderByNameAsc().stream()
         .map(mapper::toResponse)
         .toList();
     log.info("AccountService.listActive() end: count={}", result.size());
@@ -34,14 +36,14 @@ public class AccountServiceImpl implements AccountService {
 
   @Override
   @Transactional
-  public AccountDtos.AccountResponse create(AccountDtos.CreateAccountRequest request) {
+  public AccountResponse create(CreateAccountRequest request) {
     log.info("AccountService.create(request={}) start", LogSanitizer.safe(request));
 
     Account account = mapper.toEntity(request);
     account.setActive(true);
 
     Account saved = repo.save(account);
-    AccountDtos.AccountResponse response = mapper.toResponse(saved);
+    AccountResponse response = mapper.toResponse(saved);
 
     log.info("AccountService.create(...) end: accountId={}", response.id());
     return response;
@@ -49,14 +51,14 @@ public class AccountServiceImpl implements AccountService {
 
   @Override
   @Transactional
-  public AccountDtos.AccountResponse update(UUID accountId, AccountDtos.UpdateAccountRequest request) {
+  public AccountResponse update(UUID accountId, UpdateAccountRequest request) {
     log.info("AccountService.update(accountId={}, request={}) start", accountId, LogSanitizer.safe(request));
 
     Account account = getEntity(accountId);
     mapper.updateEntity(request, account);
 
     Account saved = repo.save(account);
-    AccountDtos.AccountResponse response = mapper.toResponse(saved);
+    AccountResponse response = mapper.toResponse(saved);
 
     log.info("AccountService.update(...) end: accountId={}", response.id());
     return response;

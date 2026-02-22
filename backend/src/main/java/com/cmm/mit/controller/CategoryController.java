@@ -1,7 +1,9 @@
 package com.cmm.mit.controller;
 
 import com.cmm.mit.domain.enums.CategoryType;
-import com.cmm.mit.dto.CategoryDtos;
+import com.cmm.mit.dto.CategoryResponse;
+import com.cmm.mit.dto.CreateCategoryRequest;
+import com.cmm.mit.dto.UpdateCategoryRequest;
 import com.cmm.mit.service.CategoryService;
 import jakarta.validation.Valid;
 import java.util.UUID;
@@ -17,19 +19,19 @@ public class CategoryController {
   private final CategoryService service;
 
   @GetMapping
-  public ResponseEntity<java.util.List<CategoryDtos.CategoryResponse>> list(@RequestParam(required = false) CategoryType type) {
+  public ResponseEntity<java.util.List<CategoryResponse>> list(@RequestParam(required = false) CategoryType type) {
     return ResponseEntity.ok(service.list(type));
   }
 
   @PostMapping
-  public ResponseEntity<CategoryDtos.CategoryResponse> create(@Valid @RequestBody CategoryDtos.CreateCategoryRequest request) {
+  public ResponseEntity<CategoryResponse> create(@Valid @RequestBody CreateCategoryRequest request) {
     return ResponseEntity.ok(service.create(request));
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<CategoryDtos.CategoryResponse> update(
+  public ResponseEntity<CategoryResponse> update(
       @PathVariable UUID id,
-      @Valid @RequestBody CategoryDtos.UpdateCategoryRequest request) {
+      @Valid @RequestBody UpdateCategoryRequest request) {
 
     return ResponseEntity.ok(service.update(id, request));
   }

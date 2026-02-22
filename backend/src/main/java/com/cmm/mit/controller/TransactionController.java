@@ -1,6 +1,9 @@
 package com.cmm.mit.controller;
 
-import com.cmm.mit.dto.TransactionDtos;
+import com.cmm.mit.dto.CreateTransferRequest;
+import com.cmm.mit.dto.CreateTxnRequest;
+import com.cmm.mit.dto.PageResponse;
+import com.cmm.mit.dto.TxnResponse;
 import com.cmm.mit.service.TxnService;
 import jakarta.validation.Valid;
 import java.time.Instant;
@@ -20,17 +23,17 @@ public class TransactionController {
   private final TxnService service;
 
   @PostMapping
-  public ResponseEntity<TransactionDtos.TxnResponse> create(@Valid @RequestBody TransactionDtos.CreateTxnRequest request) {
+  public ResponseEntity<TxnResponse> create(@Valid @RequestBody CreateTxnRequest request) {
     return ResponseEntity.ok(service.create(request));
   }
 
   @PostMapping("/transfer")
-  public ResponseEntity<TransactionDtos.TxnResponse> transfer(@Valid @RequestBody TransactionDtos.CreateTransferRequest request) {
+  public ResponseEntity<TxnResponse> transfer(@Valid @RequestBody CreateTransferRequest request) {
     return ResponseEntity.ok(service.transfer(request));
   }
 
   @GetMapping
-  public ResponseEntity<TransactionDtos.PageResponse<TransactionDtos.TxnResponse>> list(
+  public ResponseEntity<PageResponse<TxnResponse>> list(
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
       @RequestParam(required = false) com.cmm.mit.domain.enums.TransactionType type,
@@ -47,7 +50,7 @@ public class TransactionController {
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<TransactionDtos.TxnResponse> get(@PathVariable UUID id) {
+  public ResponseEntity<TxnResponse> get(@PathVariable UUID id) {
     return ResponseEntity.ok(service.get(id));
   }
 

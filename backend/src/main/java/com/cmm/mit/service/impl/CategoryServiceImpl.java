@@ -2,7 +2,9 @@ package com.cmm.mit.service.impl;
 
 import com.cmm.mit.domain.entity.Category;
 import com.cmm.mit.domain.enums.CategoryType;
-import com.cmm.mit.dto.CategoryDtos;
+import com.cmm.mit.dto.CategoryResponse;
+import com.cmm.mit.dto.CreateCategoryRequest;
+import com.cmm.mit.dto.UpdateCategoryRequest;
 import com.cmm.mit.exception.NotFoundException;
 import com.cmm.mit.mapper.CategoryMapper;
 import com.cmm.mit.repo.CategoryRepo;
@@ -24,28 +26,28 @@ public class CategoryServiceImpl implements CategoryService {
   private final CategoryMapper mapper;
 
   @Override
-  public List<CategoryDtos.CategoryResponse> list(CategoryType type) {
+  public List<CategoryResponse> list(CategoryType type) {
     log.info("CategoryService.list(type={}) start", type);
 
     var entities = (type == null)
         ? repo.findAllByActiveTrueOrderByNameAsc()
         : repo.findAllByTypeAndActiveTrueOrderByNameAsc(type);
 
-    List<CategoryDtos.CategoryResponse> result = entities.stream().map(mapper::toResponse).toList();
+    List<CategoryResponse> result = entities.stream().map(mapper::toResponse).toList();
     log.info("CategoryService.list(...) end: count={}", result.size());
     return result;
   }
 
   @Override
   @Transactional
-  public CategoryDtos.CategoryResponse create(CategoryDtos.CreateCategoryRequest request) {
+  public CategoryResponse create(CreateCategoryRequest request) {
     log.info("CategoryService.create(request={}) start", LogSanitizer.safe(request));
 
     Category category = mapper.toEntity(request);
     category.setActive(true);
 
     Category saved = repo.save(category);
-    CategoryDtos.CategoryResponse response = mapper.toResponse(saved);
+    CategoryResponse response = mapper.toResponse(saved);
 
     log.info("CategoryService.create(...) end: categoryId={}", response.id());
     return response;
@@ -53,14 +55,14 @@ public class CategoryServiceImpl implements CategoryService {
 
   @Override
   @Transactional
-  public CategoryDtos.CategoryResponse update(UUID categoryId, CategoryDtos.UpdateCategoryRequest request) {
+  public CategoryResponse update(UUID categoryId, UpdateCategoryRequest request) {
     log.info("CategoryService.update(categoryId={}, request={}) start", categoryId, LogSanitizer.safe(request));
 
     Category category = getEntity(categoryId);
     mapper.updateEntity(request, category);
 
     Category saved = repo.save(category);
-    CategoryDtos.CategoryResponse response = mapper.toResponse(saved);
+    CategoryResponse response = mapper.toResponse(saved);
 
     log.info("CategoryService.update(...) end: categoryId={}", response.id());
     return response;

@@ -1,6 +1,6 @@
 package com.cmm.mit.controller;
 
-import com.cmm.mit.dto.DashboardDtos;
+import com.cmm.mit.dto.PeriodResponse;
 import com.cmm.mit.service.PeriodService;
 import java.time.Clock;
 import lombok.RequiredArgsConstructor;
@@ -15,8 +15,8 @@ public class PeriodController {
   private final PeriodService periodService;
 
   @GetMapping("/current")
-  public ResponseEntity<DashboardDtos.PeriodResponse> current() {
+  public ResponseEntity<PeriodResponse> current() {
     var p = periodService.currentPeriod(Clock.systemUTC());
-    return ResponseEntity.ok(new DashboardDtos.PeriodResponse(p.start(), p.end(), p.startDay()));
+    return ResponseEntity.ok(new PeriodResponse(p.start(), p.end(), p.startDay()));
   }
 }

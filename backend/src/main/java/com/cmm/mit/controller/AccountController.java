@@ -1,6 +1,8 @@
 package com.cmm.mit.controller;
 
-import com.cmm.mit.dto.AccountDtos;
+import com.cmm.mit.dto.AccountResponse;
+import com.cmm.mit.dto.CreateAccountRequest;
+import com.cmm.mit.dto.UpdateAccountRequest;
 import com.cmm.mit.service.AccountService;
 import jakarta.validation.Valid;
 import java.util.UUID;
@@ -16,19 +18,19 @@ public class AccountController {
   private final AccountService service;
 
   @GetMapping
-  public ResponseEntity<java.util.List<AccountDtos.AccountResponse>> list() {
+  public ResponseEntity<java.util.List<AccountResponse>> list() {
     return ResponseEntity.ok(service.listActive());
   }
 
   @PostMapping
-  public ResponseEntity<AccountDtos.AccountResponse> create(@Valid @RequestBody AccountDtos.CreateAccountRequest request) {
+  public ResponseEntity<AccountResponse> create(@Valid @RequestBody CreateAccountRequest request) {
     return ResponseEntity.ok(service.create(request));
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<AccountDtos.AccountResponse> update(
+  public ResponseEntity<AccountResponse> update(
       @PathVariable UUID id,
-      @Valid @RequestBody AccountDtos.UpdateAccountRequest request) {
+      @Valid @RequestBody UpdateAccountRequest request) {
 
     return ResponseEntity.ok(service.update(id, request));
   }

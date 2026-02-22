@@ -1,6 +1,7 @@
 package com.cmm.mit.controller;
 
-import com.cmm.mit.dto.MeDtos;
+import com.cmm.mit.dto.MeResponse;
+import com.cmm.mit.dto.PatchSettingsRequest;
 import com.cmm.mit.mapper.SettingsMapper;
 import com.cmm.mit.service.SettingsService;
 import jakarta.validation.Valid;
@@ -17,12 +18,12 @@ public class MeController {
   private final SettingsMapper settingsMapper;
 
   @GetMapping
-  public ResponseEntity<MeDtos.MeResponse> me() {
+  public ResponseEntity<MeResponse> me() {
     return ResponseEntity.ok(settingsMapper.toMeResponse(settingsService.getOrCreate()));
   }
 
   @PatchMapping("/settings")
-  public ResponseEntity<MeDtos.MeResponse> patch(@Valid @RequestBody MeDtos.PatchSettingsRequest request) {
+  public ResponseEntity<MeResponse> patch(@Valid @RequestBody PatchSettingsRequest request) {
     return ResponseEntity.ok(settingsMapper.toMeResponse(settingsService.update(request.baseCurrency(), request.periodStartDay())));
   }
 }

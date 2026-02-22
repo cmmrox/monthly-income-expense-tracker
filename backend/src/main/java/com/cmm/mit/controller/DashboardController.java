@@ -1,6 +1,9 @@
 package com.cmm.mit.controller;
 
-import com.cmm.mit.dto.DashboardDtos;
+import com.cmm.mit.dto.ByCategoryResponse;
+import com.cmm.mit.dto.DailyTrendResponse;
+import com.cmm.mit.dto.RecentExpenseItem;
+import com.cmm.mit.dto.SummaryResponse;
 import com.cmm.mit.service.DashboardService;
 import com.cmm.mit.service.PeriodService;
 import java.time.*;
@@ -19,7 +22,7 @@ public class DashboardController {
   private final DashboardService dashboardService;
 
   @GetMapping("/dashboard/summary")
-  public ResponseEntity<DashboardDtos.SummaryResponse> summary(
+  public ResponseEntity<SummaryResponse> summary(
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
   ) {
@@ -31,12 +34,12 @@ public class DashboardController {
   }
 
   @GetMapping("/dashboard/recent-expenses")
-  public ResponseEntity<List<DashboardDtos.RecentExpenseItem>> recent(@RequestParam(defaultValue = "10") int limit) {
+  public ResponseEntity<List<RecentExpenseItem>> recent(@RequestParam(defaultValue = "10") int limit) {
     return ResponseEntity.ok(dashboardService.recentExpenses(limit));
   }
 
   @GetMapping("/reports/expenses/by-category")
-  public ResponseEntity<DashboardDtos.ByCategoryResponse> byCategory(
+  public ResponseEntity<ByCategoryResponse> byCategory(
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
 
@@ -44,7 +47,7 @@ public class DashboardController {
   }
 
   @GetMapping("/reports/expenses/daily-trend")
-  public ResponseEntity<DashboardDtos.DailyTrendResponse> dailyTrend(
+  public ResponseEntity<DailyTrendResponse> dailyTrend(
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
 

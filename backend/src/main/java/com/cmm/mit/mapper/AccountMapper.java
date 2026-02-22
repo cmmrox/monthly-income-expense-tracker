@@ -1,25 +1,28 @@
 package com.cmm.mit.mapper;
 
 import com.cmm.mit.domain.entity.Account;
-import com.cmm.mit.dto.AccountDtos;
+import com.cmm.mit.dto.AccountRef;
+import com.cmm.mit.dto.AccountResponse;
+import com.cmm.mit.dto.CreateAccountRequest;
+import com.cmm.mit.dto.UpdateAccountRequest;
 import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")
 public interface AccountMapper {
 
-  AccountDtos.AccountResponse toResponse(Account account);
+  AccountResponse toResponse(Account account);
 
-  AccountDtos.AccountRef toRef(Account account);
+  AccountRef toRef(Account account);
 
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "active", ignore = true)
   @Mapping(target = "createdAt", ignore = true)
   @Mapping(target = "updatedAt", ignore = true)
-  Account toEntity(AccountDtos.CreateAccountRequest request);
+  Account toEntity(CreateAccountRequest request);
 
   @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "createdAt", ignore = true)
   @Mapping(target = "updatedAt", ignore = true)
-  void updateEntity(AccountDtos.UpdateAccountRequest request, @MappingTarget Account account);
+  void updateEntity(UpdateAccountRequest request, @MappingTarget Account account);
 }

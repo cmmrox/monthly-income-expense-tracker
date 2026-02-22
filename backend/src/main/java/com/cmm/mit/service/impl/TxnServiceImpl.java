@@ -2,7 +2,10 @@ package com.cmm.mit.service.impl;
 
 import com.cmm.mit.domain.entity.Txn;
 import com.cmm.mit.domain.enums.TransactionType;
-import com.cmm.mit.dto.TransactionDtos;
+import com.cmm.mit.dto.CreateTransferRequest;
+import com.cmm.mit.dto.CreateTxnRequest;
+import com.cmm.mit.dto.PageResponse;
+import com.cmm.mit.dto.TxnResponse;
 import com.cmm.mit.exception.BadRequestException;
 import com.cmm.mit.exception.NotFoundException;
 import com.cmm.mit.mapper.TxnMapper;
@@ -31,7 +34,7 @@ public class TxnServiceImpl implements TxnService {
 
   @Override
   @Transactional
-  public TransactionDtos.TxnResponse create(TransactionDtos.CreateTxnRequest request) {
+  public TxnResponse create(CreateTxnRequest request) {
     log.info("TxnService.create(request={}) start", LogSanitizer.safe(request));
 
     if (request.type() == TransactionType.TRANSFER) {
@@ -56,7 +59,7 @@ public class TxnServiceImpl implements TxnService {
         .build();
 
     Txn saved = repo.save(txn);
-    TransactionDtos.TxnResponse response = mapper.toResponse(saved);
+    TxnResponse response = mapper.toResponse(saved);
 
     log.info("TxnService.create(...) end: txnId={}", response.id());
     return response;
@@ -64,7 +67,7 @@ public class TxnServiceImpl implements TxnService {
 
   @Override
   @Transactional
-  public TransactionDtos.TxnResponse transfer(TransactionDtos.CreateTransferRequest request) {
+  public TxnResponse transfer(CreateTransferRequest request) {
     log.info("TxnService.transfer(request={}) start", LogSanitizer.safe(request));
 
     if (request.fromAccountId().equals(request.toAccountId())) {
@@ -84,23 +87,23 @@ public class TxnServiceImpl implements TxnService {
         .build();
 
     Txn saved = repo.save(txn);
-    TransactionDtos.TxnResponse response = mapper.toResponse(saved);
+    TxnResponse response = mapper.toResponse(saved);
 
     log.info("TxnService.transfer(...) end: txnId={}", response.id());
     return response;
   }
 
   @Override
-  public TransactionDtos.TxnResponse get(UUID txnId) {
+  public TxnResponse get(UUID txnId) {
     log.info("TxnService.get(txnId={}) start", txnId);
     Txn txn = repo.findById(txnId).orElseThrow(() -> new NotFoundException("Transaction not found"));
-    TransactionDtos.TxnResponse response = mapper.toResponse(txn);
+    TxnResponse response = mapper.toResponse(txn);
     log.info("TxnService.get(...) end: txnId={}", response.id());
     return response;
   }
 
   @Override
-  public TransactionDtos.PageResponse<TransactionDtos.TxnResponse> search(
+  public PageResponse<TxnResponse> search(
       Instant from,
       Instant to,
       TransactionType type,
@@ -114,7 +117,7 @@ public class TxnServiceImpl implements TxnService {
     var page = repo.search(from, to, type, accountId, categoryId, pageable);
 
     var items = page.getContent().stream().map(mapper::toResponse).toList();
-    var response = new TransactionDtos.PageResponse<>(
+    var response = new PageResponse<>(
         items,
         page.getNumber(),
         page.getSize(),

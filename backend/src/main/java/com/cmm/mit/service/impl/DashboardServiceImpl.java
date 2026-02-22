@@ -1,7 +1,13 @@
 package com.cmm.mit.service.impl;
 
 import com.cmm.mit.domain.enums.TransactionType;
-import com.cmm.mit.dto.DashboardDtos;
+import com.cmm.mit.dto.AccountRollup;
+import com.cmm.mit.dto.ByCategoryItem;
+import com.cmm.mit.dto.ByCategoryResponse;
+import com.cmm.mit.dto.DailyPoint;
+import com.cmm.mit.dto.DailyTrendResponse;
+import com.cmm.mit.dto.RecentExpenseItem;
+import com.cmm.mit.dto.SummaryResponse;
 import com.cmm.mit.mapper.AccountMapper;
 import com.cmm.mit.mapper.CategoryMapper;
 import com.cmm.mit.repo.AccountRepo;
@@ -29,7 +35,7 @@ public class DashboardServiceImpl implements DashboardService {
   private final CategoryMapper categoryMapper;
 
   @Override
-  public DashboardDtos.SummaryResponse summary(LocalDate from, LocalDate to) {
+  public SummaryResponse summary(LocalDate from, LocalDate to) {
     log.info("DashboardService.summary(from={}, to={}) start", from, to);
 
     Instant fromInclusive = from.atStartOfDay(ZoneOffset.UTC).toInstant();
@@ -64,10 +70,10 @@ public class DashboardServiceImpl implements DashboardService {
       }
     }
 
-    var rollups = new ArrayList<DashboardDtos.AccountRollup>();
+    var rollups = new ArrayList<AccountRollup>();
     for (var account : accounts) {
       var totals = totalsByAccountId.getOrDefault(account.getId(), AccountTotals.empty());
-      rollups.add(new DashboardDtos.AccountRollup(
+      rollups.add(new AccountRollup(
           accountMapper.toRef(account),
           totals.income(),
           totals.expense(),
@@ -75,7 +81,7 @@ public class DashboardServiceImpl implements DashboardService {
           totals.transfersIn()));
     }
 
-    var response = new DashboardDtos.SummaryResponse(
+    var response = new SummaryResponse(
         from,
         to,
         incomeTotal,
@@ -89,12 +95,12 @@ public class DashboardServiceImpl implements DashboardService {
   }
 
   @Override
-  public List<DashboardDtos.RecentExpenseItem> recentExpenses(int limit) {
+  public List<RecentExpenseItem> recentExpenses(int limit) {
     int boundedLimit = Math.min(limit, 50);
     log.info("DashboardService.recentExpenses(limit={}) start", boundedLimit);
 
     var result = txnRepo.findRecentExpenses(PageRequest.of(0, boundedLimit)).stream()
-        .map(txn -> new DashboardDtos.RecentExpenseItem(
+        .map(txn -> new RecentExpenseItem(
             txn.getId(),
             txn.getTxnDate(),
             txn.getAmount(),
@@ -109,7 +115,7 @@ public class DashboardServiceImpl implements DashboardService {
   }
 
   @Override
-  public DashboardDtos.ByCategoryResponse expenseByCategory(LocalDate from, LocalDate to) {
+  public ByCategoryResponse expenseByCategory(LocalDate from, LocalDate to) {
     log.info("DashboardService.expenseByCategory(from={}, to={}) start", from, to);
 
     Instant fromInclusive = from.atStartOfDay(ZoneOffset.UTC).toInstant();
@@ -127,7 +133,7 @@ public class DashboardServiceImpl implements DashboardService {
       byId.put(category.getId(), category);
     }
 
-    var items = new ArrayList<DashboardDtos.ByCategoryItem>();
+    var items = new ArrayList<ByCategoryItem>();
     for (var row : sums) {
       UUID categoryId = (UUID) row[0];
       BigDecimal total = zeroIfNull((BigDecimal) row[1]);
@@ -135,29 +141,29 @@ public class DashboardServiceImpl implements DashboardService {
           ? 0.0
           : total.multiply(BigDecimal.valueOf(100)).divide(grand, 2, java.math.RoundingMode.HALF_UP).doubleValue();
 
-      items.add(new DashboardDtos.ByCategoryItem(
+      items.add(new ByCategoryItem(
           categoryMapper.toRef(byId.get(categoryId)),
           total,
           pct));
     }
 
-    var response = new DashboardDtos.ByCategoryResponse(from, to, items);
+    var response = new ByCategoryResponse(from, to, items);
     log.info("DashboardService.expenseByCategory(...) end: items={}, grandTotal={}", items.size(), LogSanitizer.safe(grand));
     return response;
   }
 
   @Override
-  public DashboardDtos.DailyTrendResponse dailyExpenseTrend(LocalDate from, LocalDate to) {
+  public DailyTrendResponse dailyExpenseTrend(LocalDate from, LocalDate to) {
     log.info("DashboardService.dailyExpenseTrend(from={}, to={}) start", from, to);
 
     Instant fromInclusive = from.atStartOfDay(ZoneOffset.UTC).toInstant();
     Instant toExclusive = to.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
 
     var points = txnRepo.dailyExpenseTrend(fromInclusive, toExclusive).stream()
-        .map(row -> new DashboardDtos.DailyPoint((LocalDate) row[0], zeroIfNull((BigDecimal) row[1])))
+        .map(row -> new DailyPoint((LocalDate) row[0], zeroIfNull((BigDecimal) row[1])))
         .toList();
 
-    var response = new DashboardDtos.DailyTrendResponse(from, to, points);
+    var response = new DailyTrendResponse(from, to, points);
     log.info("DashboardService.dailyExpenseTrend(...) end: points={}", points.size());
     return response;
   }

@@ -1,17 +1,19 @@
 package com.cmm.mit.service;
 
 import com.cmm.mit.domain.entity.Account;
-import com.cmm.mit.dto.AccountDtos;
+import com.cmm.mit.dto.AccountResponse;
+import com.cmm.mit.dto.CreateAccountRequest;
+import com.cmm.mit.dto.UpdateAccountRequest;
 import java.util.List;
 import java.util.UUID;
 
 public interface AccountService {
 
-  List<AccountDtos.AccountResponse> listActive();
+  List<AccountResponse> listActive();
 
-  AccountDtos.AccountResponse create(AccountDtos.CreateAccountRequest request);
+  AccountResponse create(CreateAccountRequest request);
 
-  AccountDtos.AccountResponse update(UUID accountId, AccountDtos.UpdateAccountRequest request);
+  AccountResponse update(UUID accountId, UpdateAccountRequest request);
 
   void delete(UUID accountId);
 

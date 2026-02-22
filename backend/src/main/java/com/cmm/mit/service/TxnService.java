@@ -1,20 +1,23 @@
 package com.cmm.mit.service;
 
 import com.cmm.mit.domain.enums.TransactionType;
-import com.cmm.mit.dto.TransactionDtos;
+import com.cmm.mit.dto.CreateTransferRequest;
+import com.cmm.mit.dto.CreateTxnRequest;
+import com.cmm.mit.dto.PageResponse;
+import com.cmm.mit.dto.TxnResponse;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 
 public interface TxnService {
 
-  TransactionDtos.TxnResponse create(TransactionDtos.CreateTxnRequest request);
+  TxnResponse create(CreateTxnRequest request);
 
-  TransactionDtos.TxnResponse transfer(TransactionDtos.CreateTransferRequest request);
+  TxnResponse transfer(CreateTransferRequest request);
 
-  TransactionDtos.TxnResponse get(UUID txnId);
+  TxnResponse get(UUID txnId);
 
-  TransactionDtos.PageResponse<TransactionDtos.TxnResponse> search(
+  PageResponse<TxnResponse> search(
       Instant from,
       Instant to,
       TransactionType type,
