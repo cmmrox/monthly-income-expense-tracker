@@ -99,6 +99,12 @@
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
         <version>0.8.12</version>
+        <configuration>
+          <excludes>
+            <!-- Exclude MapStruct generated implementation classes (low-value to test directly) -->
+            <exclude>**/*MapperImpl.class</exclude>
+          </excludes>
+        </configuration>
         <executions>
           <execution>
             <id>prepare-agent</id>
