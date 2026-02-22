@@ -2,6 +2,7 @@ package com.cmm.mit.controller;
 
 import com.cmm.mit.dto.ApiEnvelope;
 import com.cmm.mit.dto.MeDtos;
+import com.cmm.mit.mapper.SettingsMapper;
 import com.cmm.mit.service.SettingsService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,16 +14,15 @@ import org.springframework.web.bind.annotation.*;
 public class MeController {
 
   private final SettingsService settingsService;
+  private final SettingsMapper settingsMapper;
 
   @GetMapping
   public ApiEnvelope<MeDtos.MeResponse> me() {
-    var s = settingsService.getOrCreate();
-    return ApiEnvelope.ok(new MeDtos.MeResponse(s.getId(), s.getBaseCurrency(), s.getPeriodStartDay(), s.getCreatedAt(), s.getUpdatedAt()));
+    return ApiEnvelope.ok(settingsMapper.toMeResponse(settingsService.getOrCreate()));
   }
 
   @PatchMapping("/settings")
-  public ApiEnvelope<MeDtos.MeResponse> patch(@Valid @RequestBody MeDtos.PatchSettingsRequest req) {
-    var s = settingsService.update(req.baseCurrency(), req.periodStartDay());
-    return ApiEnvelope.ok(new MeDtos.MeResponse(s.getId(), s.getBaseCurrency(), s.getPeriodStartDay(), s.getCreatedAt(), s.getUpdatedAt()));
+  public ApiEnvelope<MeDtos.MeResponse> patch(@Valid @RequestBody MeDtos.PatchSettingsRequest request) {
+    return ApiEnvelope.ok(settingsMapper.toMeResponse(settingsService.update(request.baseCurrency(), request.periodStartDay())));
   }
 }

@@ -1,48 +1,20 @@
 package com.cmm.mit.service;
 
 import com.cmm.mit.domain.entity.Account;
-import com.cmm.mit.exception.NotFoundException;
-import com.cmm.mit.repo.AccountRepo;
+import com.cmm.mit.dto.AccountDtos;
 import java.util.List;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@RequiredArgsConstructor
-public class AccountService {
-  private final AccountRepo repo;
+public interface AccountService {
 
-  public List<Account> listActive() {
-    return repo.findAllByActiveTrueOrderByNameAsc();
-  }
+  List<AccountDtos.AccountResponse> listActive();
 
-  @Transactional
-  public Account create(Account a) {
-    a.setActive(true);
-    return repo.save(a);
-  }
+  AccountDtos.AccountResponse create(AccountDtos.CreateAccountRequest request);
 
-  public Account get(UUID id) {
-    return repo.findById(id).orElseThrow(() -> new NotFoundException("Account not found"));
-  }
+  AccountDtos.AccountResponse update(UUID accountId, AccountDtos.UpdateAccountRequest request);
 
-  @Transactional
-  public Account update(UUID id, Account patch) {
-    var a = get(id);
-    a.setName(patch.getName());
-    a.setType(patch.getType());
-    a.setCurrency(patch.getCurrency());
-    a.setOpeningBalance(patch.getOpeningBalance());
-    a.setActive(patch.isActive());
-    return repo.save(a);
-  }
+  void delete(UUID accountId);
 
-  @Transactional
-  public void delete(UUID id) {
-    var a = get(id);
-    a.setActive(false);
-    repo.save(a);
-  }
+  /** Internal use (e.g., Txn creation). Avoid using from controllers. */
+  Account getEntity(UUID accountId);
 }
