@@ -1,15 +1,21 @@
 package com.cmm.mit.controller;
 
-import com.cmm.mit.domain.entity.Category;
 import com.cmm.mit.domain.enums.CategoryType;
-import com.cmm.mit.dto.ApiEnvelope;
-import com.cmm.mit.dto.CategoryDtos;
+import com.cmm.mit.dto.CategoryResponse;
+import com.cmm.mit.dto.CreateCategoryRequest;
+import com.cmm.mit.dto.UpdateCategoryRequest;
 import com.cmm.mit.service.CategoryService;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Category HTTP API.
+ *
+ * <p>Thin controller: delegates category-related business logic to {@link com.cmm.mit.service.CategoryService}.
+ */
 @RestController
 @RequestMapping("/api/categories")
 @RequiredArgsConstructor
@@ -17,46 +23,39 @@ public class CategoryController {
 
   private final CategoryService service;
 
+  /**
+   * List active categories, optionally filtered by type.
+   */
   @GetMapping
-  public ApiEnvelope<java.util.List<CategoryDtos.CategoryResponse>> list(@RequestParam(required = false) CategoryType type) {
-    return ApiEnvelope.ok(service.list(type).stream().map(CategoryController::toResponse).toList());
+  public ResponseEntity<java.util.List<CategoryResponse>> list(@RequestParam(required = false) CategoryType type) {
+    return ResponseEntity.ok(service.list(type));
   }
 
+  /**
+   * Create a category.
+   */
   @PostMapping
-  public ApiEnvelope<CategoryDtos.CategoryResponse> create(@Valid @RequestBody CategoryDtos.CreateCategoryRequest req) {
-    var c = Category.builder()
-        .name(req.name())
-        .type(req.type())
-        .color(req.color())
-        .icon(req.icon())
-        .build();
-    return ApiEnvelope.ok(toResponse(service.create(c)));
+  public ResponseEntity<CategoryResponse> create(@Valid @RequestBody CreateCategoryRequest request) {
+    return ResponseEntity.ok(service.create(request));
   }
 
+  /**
+   * Update an existing category.
+   */
   @PutMapping("/{id}")
-  public ApiEnvelope<CategoryDtos.CategoryResponse> update(@PathVariable UUID id, @Valid @RequestBody CategoryDtos.UpdateCategoryRequest req) {
-    var patch = Category.builder()
-        .name(req.name())
-        .type(req.type())
-        .color(req.color())
-        .icon(req.icon())
-        .active(req.active())
-        .build();
-    return ApiEnvelope.ok(toResponse(service.update(id, patch)));
+  public ResponseEntity<CategoryResponse> update(
+      @PathVariable UUID id,
+      @Valid @RequestBody UpdateCategoryRequest request) {
+
+    return ResponseEntity.ok(service.update(id, request));
   }
 
+  /**
+   * Soft-delete (deactivate) a category.
+   */
   @DeleteMapping("/{id}")
-  public ApiEnvelope<java.util.Map<String, Object>> delete(@PathVariable UUID id) {
+  public ResponseEntity<java.util.Map<String, Object>> delete(@PathVariable UUID id) {
     service.delete(id);
-    return ApiEnvelope.ok(java.util.Map.of("ok", true));
-  }
-
-  static CategoryDtos.CategoryResponse toResponse(Category c) {
-    return new CategoryDtos.CategoryResponse(c.getId(), c.getName(), c.getType(), c.getColor(), c.getIcon(), c.isActive(), c.getCreatedAt(), c.getUpdatedAt());
-  }
-
-  public static CategoryDtos.CategoryRef toRef(Category c) {
-    if (c == null) return null;
-    return new CategoryDtos.CategoryRef(c.getId(), c.getName(), c.getType(), c.getColor());
+    return ResponseEntity.ok(java.util.Map.of("ok", true));
   }
 }

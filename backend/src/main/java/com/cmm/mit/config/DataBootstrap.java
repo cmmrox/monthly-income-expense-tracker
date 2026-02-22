@@ -14,6 +14,11 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Data bootstrap for development environments.
+ *
+ * <p>Seeds a minimal set of default accounts and categories when the database is empty.
+ */
 @Configuration
 @RequiredArgsConstructor
 @Slf4j
@@ -21,11 +26,15 @@ public class DataBootstrap {
 
   private final SettingsService settingsService;
 
+  /**
+   * Seed defaults if required.
+   */
   @Bean
   CommandLineRunner bootstrap(AccountRepo accountRepo, CategoryRepo categoryRepo) {
     return args -> {
       var settings = settingsService.getOrCreate();
 
+      // Only seed on empty DB to avoid overwriting user data.
       if (accountRepo.count() == 0) {
         log.info("Bootstrapping default accounts");
         accountRepo.save(Account.builder()
@@ -45,6 +54,7 @@ public class DataBootstrap {
             .build());
       }
 
+      // Only seed on empty DB to avoid overwriting user data.
       if (categoryRepo.count() == 0) {
         log.info("Bootstrapping default categories");
         // Income

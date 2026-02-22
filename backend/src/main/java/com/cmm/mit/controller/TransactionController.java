@@ -1,17 +1,25 @@
 package com.cmm.mit.controller;
 
-import com.cmm.mit.dto.ApiEnvelope;
-import com.cmm.mit.dto.TransactionDtos;
+import com.cmm.mit.dto.CreateTransferRequest;
+import com.cmm.mit.dto.CreateTxnRequest;
+import com.cmm.mit.dto.PageResponse;
+import com.cmm.mit.dto.TxnResponse;
 import com.cmm.mit.service.TxnService;
 import jakarta.validation.Valid;
-import java.time.*;
+import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Transaction HTTP API.
+ *
+ * <p>Controller contains no transaction business logic; it delegates to {@link com.cmm.mit.service.TxnService}.
+ */
 @RestController
 @RequestMapping("/api/transactions")
 @RequiredArgsConstructor
@@ -19,20 +27,27 @@ public class TransactionController {
 
   private final TxnService service;
 
+  /**
+   * Create an income/expense transaction.
+   */
   @PostMapping
-  public ApiEnvelope<TransactionDtos.TxnResponse> create(@Valid @RequestBody TransactionDtos.CreateTxnRequest req) {
-    var t = service.createIncomeOrExpense(req.txnDate(), req.type(), req.amount(), req.accountId(), req.categoryId(), req.description(), req.merchant(), req.paymentMethod());
-    return ApiEnvelope.ok(toResponse(t));
+  public ResponseEntity<TxnResponse> create(@Valid @RequestBody CreateTxnRequest request) {
+    return ResponseEntity.ok(service.create(request));
   }
 
+  /**
+   * Create a transfer transaction.
+   */
   @PostMapping("/transfer")
-  public ApiEnvelope<TransactionDtos.TxnResponse> transfer(@Valid @RequestBody TransactionDtos.CreateTransferRequest req) {
-    var t = service.createTransfer(req.txnDate(), req.amount(), req.fromAccountId(), req.toAccountId(), req.description());
-    return ApiEnvelope.ok(toResponse(t));
+  public ResponseEntity<TxnResponse> transfer(@Valid @RequestBody CreateTransferRequest request) {
+    return ResponseEntity.ok(service.transfer(request));
   }
 
+  /**
+   * Search transactions within a date range.
+   */
   @GetMapping
-  public ApiEnvelope<TransactionDtos.PageResponse<TransactionDtos.TxnResponse>> list(
+  public ResponseEntity<PageResponse<TxnResponse>> list(
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
       @RequestParam(required = false) com.cmm.mit.domain.enums.TransactionType type,
@@ -45,39 +60,23 @@ public class TransactionController {
   ) {
     var direction = dir.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
     var pageable = PageRequest.of(page, size, Sort.by(direction, sort));
-    var p = service.search(from, to, type, accountId, categoryId, pageable);
-    var body = new TransactionDtos.PageResponse<>(
-        p.getContent().stream().map(TransactionController::toResponse).toList(),
-        p.getNumber(), p.getSize(), p.getTotalElements(), p.getTotalPages());
-    return ApiEnvelope.ok(body);
+    return ResponseEntity.ok(service.search(from, to, type, accountId, categoryId, pageable));
   }
 
+  /**
+   * Get a single transaction.
+   */
   @GetMapping("/{id}")
-  public ApiEnvelope<TransactionDtos.TxnResponse> get(@PathVariable UUID id) {
-    return ApiEnvelope.ok(toResponse(service.get(id)));
+  public ResponseEntity<TxnResponse> get(@PathVariable UUID id) {
+    return ResponseEntity.ok(service.get(id));
   }
 
+  /**
+   * Delete a transaction.
+   */
   @DeleteMapping("/{id}")
-  public ApiEnvelope<java.util.Map<String, Object>> delete(@PathVariable UUID id) {
+  public ResponseEntity<java.util.Map<String, Object>> delete(@PathVariable UUID id) {
     service.delete(id);
-    return ApiEnvelope.ok(java.util.Map.of("ok", true));
-  }
-
-  static TransactionDtos.TxnResponse toResponse(com.cmm.mit.domain.entity.Txn t) {
-    return new TransactionDtos.TxnResponse(
-        t.getId(),
-        t.getTxnDate(),
-        t.getType(),
-        t.getAmount(),
-        AccountController.toRef(t.getAccount()),
-        CategoryController.toRef(t.getCategory()),
-        AccountController.toRef(t.getFromAccount()),
-        AccountController.toRef(t.getToAccount()),
-        t.getDescription(),
-        t.getMerchant(),
-        t.getPaymentMethod(),
-        t.getCreatedAt(),
-        t.getUpdatedAt()
-    );
+    return ResponseEntity.ok(java.util.Map.of("ok", true));
   }
 }

@@ -13,22 +13,79 @@ import org.springframework.data.repository.query.Param;
 
 public interface TxnRepo extends JpaRepository<Txn, UUID> {
 
+  /**
+   * Search transactions within a date range with optional type/category filters.
+   *
+   * <p>NFR note: this method is used when accountId filter is not provided, to keep the query index-friendly
+   * at scale.
+   */
   @Query("""
       select t from Txn t
       where t.txnDate >= :from and t.txnDate < :to
         and (:type is null or t.type = :type)
-        and (
-          :accountId is null
-          or t.account.id = :accountId
-          or t.fromAccount.id = :accountId
-          or t.toAccount.id = :accountId
-        )
         and (:categoryId is null or t.category.id = :categoryId)
       """)
-  Page<Txn> search(
+  Page<Txn> searchNoAccount(
       @Param("from") Instant from,
       @Param("to") Instant to,
       @Param("type") TransactionType type,
+      @Param("categoryId") UUID categoryId,
+      Pageable pageable);
+
+  /**
+   * Account-centric search.
+   *
+   * <p>NFR note: avoids an OR across three account columns (account_id/from_account_id/to_account_id), which
+   * can degrade index usage as the transactions table grows.
+   */
+  @Query(
+      value = """
+          select * from (
+            select t.* from transactions t
+            where t.txn_date >= :from and t.txn_date < :to
+              and (:type is null or t.type = :type)
+              and (:categoryId is null or t.category_id = :categoryId)
+              and t.account_id = :accountId
+            union
+            select t.* from transactions t
+            where t.txn_date >= :from and t.txn_date < :to
+              and (:type is null or t.type = :type)
+              and (:categoryId is null or t.category_id = :categoryId)
+              and t.from_account_id = :accountId
+            union
+            select t.* from transactions t
+            where t.txn_date >= :from and t.txn_date < :to
+              and (:type is null or t.type = :type)
+              and (:categoryId is null or t.category_id = :categoryId)
+              and t.to_account_id = :accountId
+          ) u
+          """,
+      countQuery = """
+          select count(*) from (
+            select t.id from transactions t
+            where t.txn_date >= :from and t.txn_date < :to
+              and (:type is null or t.type = :type)
+              and (:categoryId is null or t.category_id = :categoryId)
+              and t.account_id = :accountId
+            union
+            select t.id from transactions t
+            where t.txn_date >= :from and t.txn_date < :to
+              and (:type is null or t.type = :type)
+              and (:categoryId is null or t.category_id = :categoryId)
+              and t.from_account_id = :accountId
+            union
+            select t.id from transactions t
+            where t.txn_date >= :from and t.txn_date < :to
+              and (:type is null or t.type = :type)
+              and (:categoryId is null or t.category_id = :categoryId)
+              and t.to_account_id = :accountId
+          ) u
+          """,
+      nativeQuery = true)
+  Page<Txn> searchByAccount(
+      @Param("from") Instant from,
+      @Param("to") Instant to,
+      @Param("type") String type,
       @Param("accountId") UUID accountId,
       @Param("categoryId") UUID categoryId,
       Pageable pageable);

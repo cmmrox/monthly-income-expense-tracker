@@ -1,48 +1,51 @@
 package com.cmm.mit.service;
 
 import com.cmm.mit.domain.entity.Account;
-import com.cmm.mit.exception.NotFoundException;
-import com.cmm.mit.repo.AccountRepo;
+import com.cmm.mit.dto.AccountResponse;
+import com.cmm.mit.dto.CreateAccountRequest;
+import com.cmm.mit.dto.UpdateAccountRequest;
 import java.util.List;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@RequiredArgsConstructor
-public class AccountService {
-  private final AccountRepo repo;
+/**
+ * Account service API.
+ *
+ * <p>Business rules and orchestration for accounts live here (not in controllers).
+ */
+public interface AccountService {
 
-  public List<Account> listActive() {
-    return repo.findAllByActiveTrueOrderByNameAsc();
-  }
+  /**
+   * List active accounts ordered by name.
+   */
+  List<AccountResponse> listActive();
 
-  @Transactional
-  public Account create(Account a) {
-    a.setActive(true);
-    return repo.save(a);
-  }
+  /**
+   * Create a new account.
+   *
+   * <p>Implementation sets default flags (e.g., active=true) and persists the entity.
+   */
+  AccountResponse create(CreateAccountRequest request);
 
-  public Account get(UUID id) {
-    return repo.findById(id).orElseThrow(() -> new NotFoundException("Account not found"));
-  }
+  /**
+   * Update an existing account.
+   *
+   * @throws com.cmm.mit.exception.NotFoundException when the account does not exist
+   */
+  AccountResponse update(UUID accountId, UpdateAccountRequest request);
 
-  @Transactional
-  public Account update(UUID id, Account patch) {
-    var a = get(id);
-    a.setName(patch.getName());
-    a.setType(patch.getType());
-    a.setCurrency(patch.getCurrency());
-    a.setOpeningBalance(patch.getOpeningBalance());
-    a.setActive(patch.isActive());
-    return repo.save(a);
-  }
+  /**
+   * Soft-delete (deactivate) an account.
+   *
+   * @throws com.cmm.mit.exception.NotFoundException when the account does not exist
+   */
+  void delete(UUID accountId);
 
-  @Transactional
-  public void delete(UUID id) {
-    var a = get(id);
-    a.setActive(false);
-    repo.save(a);
-  }
+  /**
+   * Fetch an account entity for internal orchestration (e.g., transaction creation).
+   *
+   * <p>Avoid using from controllers.
+   *
+   * @throws com.cmm.mit.exception.NotFoundException when the account does not exist
+   */
+  Account getEntity(UUID accountId);
 }

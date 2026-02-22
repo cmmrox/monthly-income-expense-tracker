@@ -1,12 +1,17 @@
 package com.cmm.mit.controller;
 
-import com.cmm.mit.dto.ApiEnvelope;
-import com.cmm.mit.dto.DashboardDtos;
+import com.cmm.mit.dto.PeriodResponse;
 import com.cmm.mit.service.PeriodService;
 import java.time.Clock;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Period HTTP API.
+ *
+ * <p>Exposes salary-cycle period calculations.
+ */
 @RestController
 @RequestMapping("/api/period")
 @RequiredArgsConstructor
@@ -14,9 +19,12 @@ public class PeriodController {
 
   private final PeriodService periodService;
 
+  /**
+   * Get the current salary-cycle period.
+   */
   @GetMapping("/current")
-  public ApiEnvelope<DashboardDtos.PeriodResponse> current() {
+  public ResponseEntity<PeriodResponse> current() {
     var p = periodService.currentPeriod(Clock.systemUTC());
-    return ApiEnvelope.ok(new DashboardDtos.PeriodResponse(p.start(), p.end(), p.startDay()));
+    return ResponseEntity.ok(new PeriodResponse(p.start(), p.end(), p.startDay()));
   }
 }

@@ -2,49 +2,49 @@ package com.cmm.mit.service;
 
 import com.cmm.mit.domain.entity.Category;
 import com.cmm.mit.domain.enums.CategoryType;
-import com.cmm.mit.exception.NotFoundException;
-import com.cmm.mit.repo.CategoryRepo;
+import com.cmm.mit.dto.CategoryResponse;
+import com.cmm.mit.dto.CreateCategoryRequest;
+import com.cmm.mit.dto.UpdateCategoryRequest;
 import java.util.List;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@RequiredArgsConstructor
-public class CategoryService {
-  private final CategoryRepo repo;
+/**
+ * Category service API.
+ *
+ * <p>Contains category-related business rules/orchestration. Controllers must remain thin.
+ */
+public interface CategoryService {
 
-  public List<Category> list(CategoryType type) {
-    if (type == null) return repo.findAllByActiveTrueOrderByNameAsc();
-    return repo.findAllByTypeAndActiveTrueOrderByNameAsc(type);
-  }
+  /**
+   * List active categories, optionally filtered by type.
+   */
+  List<CategoryResponse> list(CategoryType type);
 
-  @Transactional
-  public Category create(Category c) {
-    c.setActive(true);
-    return repo.save(c);
-  }
+  /**
+   * Create a new category.
+   */
+  CategoryResponse create(CreateCategoryRequest request);
 
-  public Category get(UUID id) {
-    return repo.findById(id).orElseThrow(() -> new NotFoundException("Category not found"));
-  }
+  /**
+   * Update an existing category.
+   *
+   * @throws com.cmm.mit.exception.NotFoundException when the category does not exist
+   */
+  CategoryResponse update(UUID categoryId, UpdateCategoryRequest request);
 
-  @Transactional
-  public Category update(UUID id, Category patch) {
-    var c = get(id);
-    c.setName(patch.getName());
-    c.setType(patch.getType());
-    c.setColor(patch.getColor());
-    c.setIcon(patch.getIcon());
-    c.setActive(patch.isActive());
-    return repo.save(c);
-  }
+  /**
+   * Soft-delete (deactivate) a category.
+   *
+   * @throws com.cmm.mit.exception.NotFoundException when the category does not exist
+   */
+  void delete(UUID categoryId);
 
-  @Transactional
-  public void delete(UUID id) {
-    var c = get(id);
-    c.setActive(false);
-    repo.save(c);
-  }
+  /**
+   * Fetch a category entity for internal orchestration (e.g., transaction creation).
+   *
+   * <p>Avoid using from controllers.
+   *
+   * @throws com.cmm.mit.exception.NotFoundException when the category does not exist
+   */
+  Category getEntity(UUID categoryId);
 }
