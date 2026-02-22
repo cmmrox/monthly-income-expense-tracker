@@ -122,7 +122,8 @@ class TxnServiceImplTest {
     Instant to = Instant.parse("2026-02-01T00:00:00Z");
 
     var txn = Txn.builder().id(UUID.randomUUID()).txnDate(from).type(TransactionType.INCOME).amount(BigDecimal.ONE).build();
-    when(repo.search(eq(from), eq(to), isNull(), isNull(), isNull(), any())).thenReturn(new PageImpl<>(List.of(txn), PageRequest.of(0, 20), 1));
+    when(repo.searchNoAccount(eq(from), eq(to), isNull(), isNull(), any()))
+        .thenReturn(new PageImpl<>(List.of(txn), PageRequest.of(0, 20), 1));
     when(mapper.toResponse(txn)).thenReturn(new TxnResponse(txn.getId(), txn.getTxnDate(), txn.getType(), txn.getAmount(), null, null, null, null, null, null, null, null, null));
 
     PageResponse<TxnResponse> response = service.search(from, to, null, null, null, PageRequest.of(0, 20));

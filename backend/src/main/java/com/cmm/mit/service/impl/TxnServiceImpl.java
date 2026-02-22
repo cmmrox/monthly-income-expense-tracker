@@ -135,7 +135,10 @@ public class TxnServiceImpl implements TxnService {
     log.info("TxnService.search(from={}, to={}, type={}, accountId={}, categoryId={}, pageable={}) start",
         from, to, type, accountId, categoryId, LogSanitizer.safe(pageable));
 
-    var page = repo.search(from, to, type, accountId, categoryId, pageable);
+    var page =
+        accountId == null
+            ? repo.searchNoAccount(from, to, type, categoryId, pageable)
+            : repo.searchByAccount(from, to, type == null ? null : type.name(), accountId, categoryId, pageable);
 
     var items = page.getContent().stream().map(mapper::toResponse).toList();
     var response = new PageResponse<>(

@@ -64,7 +64,7 @@ public class DashboardServiceImpl implements DashboardService {
 
     // Fetch transactions for the period.
     // Note: this uses a bounded page size as a pragmatic guardrail for now.
-    var txns = txnRepo.search(fromInclusive, toExclusive, null, null, null, PageRequest.of(0, 5000)).getContent();
+    var txns = txnRepo.searchNoAccount(fromInclusive, toExclusive, null, null, PageRequest.of(0, 5000)).getContent();
 
     // Roll-up totals per account. Transfers affect both from/to accounts.
     for (var txn : txns) {

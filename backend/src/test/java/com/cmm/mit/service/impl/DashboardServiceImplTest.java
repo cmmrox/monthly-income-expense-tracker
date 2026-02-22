@@ -56,7 +56,7 @@ class DashboardServiceImplTest {
     var expenseTxn = Txn.builder().id(UUID.randomUUID()).type(TransactionType.EXPENSE).amount(new BigDecimal("10.00")).account(account)
         .txnDate(Instant.parse("2026-01-10T00:00:00Z")).build();
 
-    when(txnRepo.search(any(), any(), isNull(), isNull(), isNull(), eq(PageRequest.of(0, 5000))))
+    when(txnRepo.searchNoAccount(any(), any(), isNull(), isNull(), eq(PageRequest.of(0, 5000))))
         .thenReturn(new PageImpl<>(List.of(expenseTxn)));
 
     when(accountMapper.toRef(account)).thenReturn(new AccountRef(accId, "Bank", AccountType.BANK));
