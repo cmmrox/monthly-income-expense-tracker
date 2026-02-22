@@ -22,6 +22,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Transaction service implementation.
+ *
+ * <p>Implements all business rules for transaction creation (income/expense/transfer) and searching.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -32,14 +37,20 @@ public class TxnServiceImpl implements TxnService {
   private final CategoryService categoryService;
   private final TxnMapper mapper;
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   @Transactional
   public TxnResponse create(CreateTxnRequest request) {
     log.info("TxnService.create(request={}) start", LogSanitizer.safe(request));
 
+    // Enforce API contract: TRANSFER must be created via transfer endpoint.
     if (request.type() == TransactionType.TRANSFER) {
       throw new BadRequestException("Use /transactions/transfer for transfers");
     }
+
+    // Income/expense transactions must point to an account + category.
     if (request.accountId() == null || request.categoryId() == null) {
       throw new BadRequestException("accountId and categoryId are required for income/expense");
     }
@@ -65,11 +76,15 @@ public class TxnServiceImpl implements TxnService {
     return response;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   @Transactional
   public TxnResponse transfer(CreateTransferRequest request) {
     log.info("TxnService.transfer(request={}) start", LogSanitizer.safe(request));
 
+    // Transfers must move between two distinct accounts.
     if (request.fromAccountId().equals(request.toAccountId())) {
       throw new BadRequestException("fromAccountId and toAccountId must be different");
     }
@@ -93,6 +108,9 @@ public class TxnServiceImpl implements TxnService {
     return response;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public TxnResponse get(UUID txnId) {
     log.info("TxnService.get(txnId={}) start", txnId);
@@ -102,6 +120,9 @@ public class TxnServiceImpl implements TxnService {
     return response;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public PageResponse<TxnResponse> search(
       Instant from,
@@ -128,6 +149,9 @@ public class TxnServiceImpl implements TxnService {
     return response;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   @Transactional
   public void delete(UUID txnId) {

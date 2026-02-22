@@ -16,6 +16,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Account service implementation.
+ *
+ * <p>Owns account-related business rules (e.g., soft delete) and delegates persistence to {@link com.cmm.mit.repo.AccountRepo}.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -24,6 +29,9 @@ public class AccountServiceImpl implements AccountService {
   private final AccountRepo repo;
   private final AccountMapper mapper;
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public List<AccountResponse> listActive() {
     log.info("AccountService.listActive() start");
@@ -34,12 +42,17 @@ public class AccountServiceImpl implements AccountService {
     return result;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   @Transactional
   public AccountResponse create(CreateAccountRequest request) {
     log.info("AccountService.create(request={}) start", LogSanitizer.safe(request));
 
     Account account = mapper.toEntity(request);
+
+    // New accounts are active by default.
     account.setActive(true);
 
     Account saved = repo.save(account);
@@ -49,6 +62,9 @@ public class AccountServiceImpl implements AccountService {
     return response;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   @Transactional
   public AccountResponse update(UUID accountId, UpdateAccountRequest request) {
@@ -64,18 +80,26 @@ public class AccountServiceImpl implements AccountService {
     return response;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   @Transactional
   public void delete(UUID accountId) {
     log.info("AccountService.delete(accountId={}) start", accountId);
 
     Account account = getEntity(accountId);
+
+    // Soft delete: keep historical references but hide from active lists.
     account.setActive(false);
     repo.save(account);
 
     log.info("AccountService.delete(...) end: accountId={}", accountId);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Account getEntity(UUID accountId) {
     log.info("AccountService.getEntity(accountId={}) start", accountId);

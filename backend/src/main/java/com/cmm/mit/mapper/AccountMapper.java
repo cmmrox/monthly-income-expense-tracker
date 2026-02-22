@@ -7,9 +7,17 @@ import com.cmm.mit.dto.CreateAccountRequest;
 import com.cmm.mit.dto.UpdateAccountRequest;
 import org.mapstruct.*;
 
+/**
+ * MapStruct mapper for {@link com.cmm.mit.domain.entity.Account}.
+ *
+ * <p>Used by the service layer to keep controllers free of mapping logic.
+ */
 @Mapper(componentModel = "spring")
 public interface AccountMapper {
 
+  /**
+   * Map entity to API response.
+   */
   AccountResponse toResponse(Account account);
 
   AccountRef toRef(Account account);

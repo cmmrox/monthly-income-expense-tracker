@@ -3,7 +3,7 @@ package com.cmm.mit.util;
 /**
  * Minimal helper for safe logging.
  *
- * Keep it conservative: truncate long strings and avoid dumping huge payloads.
+ * <p>Keep it conservative: truncate long strings and avoid dumping huge payloads.
  * This project currently has no auth/secrets in requests, but we still avoid
  * unbounded log growth.
  */

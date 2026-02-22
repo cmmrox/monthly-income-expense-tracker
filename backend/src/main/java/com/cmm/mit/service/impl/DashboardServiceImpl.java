@@ -23,6 +23,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+/**
+ * Dashboard/reporting service implementation.
+ *
+ * <p>Encapsulates the aggregation logic used by the UI.
+ * Complex report calculations should be documented to keep maintenance easy.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -34,6 +40,9 @@ public class DashboardServiceImpl implements DashboardService {
   private final AccountMapper accountMapper;
   private final CategoryMapper categoryMapper;
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public SummaryResponse summary(LocalDate from, LocalDate to) {
     log.info("DashboardService.summary(from={}, to={}) start", from, to);
@@ -45,12 +54,18 @@ public class DashboardServiceImpl implements DashboardService {
     BigDecimal expenseTotal = zeroIfNull(txnRepo.sumByType(fromInclusive, toExclusive, TransactionType.EXPENSE));
 
     var accounts = accountRepo.findAllByActiveTrueOrderByNameAsc();
+
+    // Initialize totals map so all active accounts appear in the response (even with zero activity).
     var totalsByAccountId = new HashMap<UUID, AccountTotals>();
     for (var account : accounts) {
       totalsByAccountId.put(account.getId(), AccountTotals.empty());
     }
 
+    // Fetch transactions for the period.
+    // Note: this uses a bounded page size as a pragmatic guardrail for now.
     var txns = txnRepo.search(fromInclusive, toExclusive, null, null, null, PageRequest.of(0, 5000)).getContent();
+
+    // Roll-up totals per account. Transfers affect both from/to accounts.
     for (var txn : txns) {
       if (txn.getType() == TransactionType.INCOME && txn.getAccount() != null) {
         var current = totalsByAccountId.getOrDefault(txn.getAccount().getId(), AccountTotals.empty());
@@ -94,8 +109,12 @@ public class DashboardServiceImpl implements DashboardService {
     return response;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public List<RecentExpenseItem> recentExpenses(int limit) {
+    // Safety cap to avoid accidental heavy queries.
     int boundedLimit = Math.min(limit, 50);
     log.info("DashboardService.recentExpenses(limit={}) start", boundedLimit);
 
@@ -114,6 +133,9 @@ public class DashboardServiceImpl implements DashboardService {
     return result;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public ByCategoryResponse expenseByCategory(LocalDate from, LocalDate to) {
     log.info("DashboardService.expenseByCategory(from={}, to={}) start", from, to);
@@ -122,6 +144,7 @@ public class DashboardServiceImpl implements DashboardService {
     Instant toExclusive = to.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
 
     var sums = txnRepo.sumExpenseByCategory(fromInclusive, toExclusive);
+    // Grand total is used to compute percentages per category.
     BigDecimal grand = sums.stream()
         .map(row -> (BigDecimal) row[1])
         .filter(Objects::nonNull)
@@ -152,6 +175,9 @@ public class DashboardServiceImpl implements DashboardService {
     return response;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public DailyTrendResponse dailyExpenseTrend(LocalDate from, LocalDate to) {
     log.info("DashboardService.dailyExpenseTrend(from={}, to={}) start", from, to);

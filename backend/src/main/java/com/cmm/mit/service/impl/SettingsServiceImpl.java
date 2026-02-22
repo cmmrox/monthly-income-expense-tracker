@@ -12,6 +12,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Settings service implementation.
+ *
+ * <p>Stores and validates user settings such as base currency and period start day.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -25,6 +30,9 @@ public class SettingsServiceImpl implements SettingsService {
   @Value("${app.periodStartDay:25}")
   int defaultPeriodStartDay;
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   @Transactional
   public UserSettings getOrCreate() {
@@ -49,6 +57,9 @@ public class SettingsServiceImpl implements SettingsService {
     return saved;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   @Transactional
   public UserSettings update(String baseCurrency, int periodStartDay) {
@@ -67,6 +78,9 @@ public class SettingsServiceImpl implements SettingsService {
     return saved;
   }
 
+  /**
+   * Validate that the start day is compatible with all months (we restrict to 1..28).
+   */
   private static void validatePeriodStartDay(int periodStartDay) {
     if (periodStartDay < 1 || periodStartDay > 28) {
       throw new BadRequestException("periodStartDay must be between 1 and 28");

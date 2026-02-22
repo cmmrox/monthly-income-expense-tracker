@@ -7,6 +7,9 @@ import com.cmm.mit.dto.CreateCategoryRequest;
 import com.cmm.mit.dto.UpdateCategoryRequest;
 import org.mapstruct.*;
 
+/**
+ * MapStruct mapper for {@link com.cmm.mit.domain.entity.Category}.
+ */
 @Mapper(componentModel = "spring")
 public interface CategoryMapper {
 

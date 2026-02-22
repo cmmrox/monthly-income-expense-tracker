@@ -15,6 +15,11 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Transaction HTTP API.
+ *
+ * <p>Controller contains no transaction business logic; it delegates to {@link com.cmm.mit.service.TxnService}.
+ */
 @RestController
 @RequestMapping("/api/transactions")
 @RequiredArgsConstructor
@@ -22,16 +27,25 @@ public class TransactionController {
 
   private final TxnService service;
 
+  /**
+   * Create an income/expense transaction.
+   */
   @PostMapping
   public ResponseEntity<TxnResponse> create(@Valid @RequestBody CreateTxnRequest request) {
     return ResponseEntity.ok(service.create(request));
   }
 
+  /**
+   * Create a transfer transaction.
+   */
   @PostMapping("/transfer")
   public ResponseEntity<TxnResponse> transfer(@Valid @RequestBody CreateTransferRequest request) {
     return ResponseEntity.ok(service.transfer(request));
   }
 
+  /**
+   * Search transactions within a date range.
+   */
   @GetMapping
   public ResponseEntity<PageResponse<TxnResponse>> list(
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
@@ -49,11 +63,17 @@ public class TransactionController {
     return ResponseEntity.ok(service.search(from, to, type, accountId, categoryId, pageable));
   }
 
+  /**
+   * Get a single transaction.
+   */
   @GetMapping("/{id}")
   public ResponseEntity<TxnResponse> get(@PathVariable UUID id) {
     return ResponseEntity.ok(service.get(id));
   }
 
+  /**
+   * Delete a transaction.
+   */
   @DeleteMapping("/{id}")
   public ResponseEntity<java.util.Map<String, Object>> delete(@PathVariable UUID id) {
     service.delete(id);
