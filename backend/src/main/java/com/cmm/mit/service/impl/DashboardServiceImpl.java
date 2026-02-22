@@ -1,5 +1,6 @@
 package com.cmm.mit.service.impl;
 
+import com.cmm.mit.common.util.BigDecimalUtils;
 import com.cmm.mit.domain.enums.TransactionType;
 import com.cmm.mit.dto.AccountRollup;
 import com.cmm.mit.dto.ByCategoryItem;
@@ -26,8 +27,8 @@ import org.springframework.stereotype.Service;
 /**
  * Dashboard/reporting service implementation.
  *
- * <p>Encapsulates the aggregation logic used by the UI.
- * Complex report calculations should be documented to keep maintenance easy.
+ * <p>Encapsulates the aggregation logic used by the UI. Complex report calculations should be documented to keep
+ * maintenance easy.
  */
 @Slf4j
 @Service
@@ -40,9 +41,7 @@ public class DashboardServiceImpl implements DashboardService {
   private final AccountMapper accountMapper;
   private final CategoryMapper categoryMapper;
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public SummaryResponse summary(LocalDate from, LocalDate to) {
     log.info("DashboardService.summary(from={}, to={}) start", from, to);
@@ -50,8 +49,10 @@ public class DashboardServiceImpl implements DashboardService {
     Instant fromInclusive = from.atStartOfDay(ZoneOffset.UTC).toInstant();
     Instant toExclusive = to.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
 
-    BigDecimal incomeTotal = zeroIfNull(txnRepo.sumByType(fromInclusive, toExclusive, TransactionType.INCOME));
-    BigDecimal expenseTotal = zeroIfNull(txnRepo.sumByType(fromInclusive, toExclusive, TransactionType.EXPENSE));
+    BigDecimal incomeTotal =
+        BigDecimalUtils.zeroIfNull(txnRepo.sumByType(fromInclusive, toExclusive, TransactionType.INCOME));
+    BigDecimal expenseTotal =
+        BigDecimalUtils.zeroIfNull(txnRepo.sumByType(fromInclusive, toExclusive, TransactionType.EXPENSE));
 
     var accounts = accountRepo.findAllByActiveTrueOrderByNameAsc();
 
@@ -88,54 +89,53 @@ public class DashboardServiceImpl implements DashboardService {
     var rollups = new ArrayList<AccountRollup>();
     for (var account : accounts) {
       var totals = totalsByAccountId.getOrDefault(account.getId(), AccountTotals.empty());
-      rollups.add(new AccountRollup(
-          accountMapper.toRef(account),
-          totals.income(),
-          totals.expense(),
-          totals.transfersOut(),
-          totals.transfersIn()));
+      rollups.add(
+          new AccountRollup(
+              accountMapper.toRef(account),
+              totals.income(),
+              totals.expense(),
+              totals.transfersOut(),
+              totals.transfersIn()));
     }
 
-    var response = new SummaryResponse(
-        from,
-        to,
-        incomeTotal,
-        expenseTotal,
-        incomeTotal.subtract(expenseTotal),
-        rollups);
+    var response =
+        new SummaryResponse(
+            from, to, incomeTotal, expenseTotal, incomeTotal.subtract(expenseTotal), rollups);
 
-    log.info("DashboardService.summary(...) end: accounts={}, incomeTotal={}, expenseTotal={}",
-        rollups.size(), incomeTotal, expenseTotal);
+    log.info(
+        "DashboardService.summary(...) end: accounts={}, incomeTotal={}, expenseTotal={}",
+        rollups.size(),
+        incomeTotal,
+        expenseTotal);
     return response;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public List<RecentExpenseItem> recentExpenses(int limit) {
     // Safety cap to avoid accidental heavy queries.
     int boundedLimit = Math.min(limit, 50);
     log.info("DashboardService.recentExpenses(limit={}) start", boundedLimit);
 
-    var result = txnRepo.findRecentExpenses(PageRequest.of(0, boundedLimit)).stream()
-        .map(txn -> new RecentExpenseItem(
-            txn.getId(),
-            txn.getTxnDate(),
-            txn.getAmount(),
-            categoryMapper.toRef(txn.getCategory()),
-            accountMapper.toRef(txn.getAccount()),
-            txn.getDescription(),
-            txn.getMerchant()))
-        .toList();
+    var result =
+        txnRepo.findRecentExpenses(PageRequest.of(0, boundedLimit)).stream()
+            .map(
+                txn ->
+                    new RecentExpenseItem(
+                        txn.getId(),
+                        txn.getTxnDate(),
+                        txn.getAmount(),
+                        categoryMapper.toRef(txn.getCategory()),
+                        accountMapper.toRef(txn.getAccount()),
+                        txn.getDescription(),
+                        txn.getMerchant()))
+            .toList();
 
     log.info("DashboardService.recentExpenses(...) end: count={}", result.size());
     return result;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public ByCategoryResponse expenseByCategory(LocalDate from, LocalDate to) {
     log.info("DashboardService.expenseByCategory(from={}, to={}) start", from, to);
@@ -145,10 +145,11 @@ public class DashboardServiceImpl implements DashboardService {
 
     var sums = txnRepo.sumExpenseByCategory(fromInclusive, toExclusive);
     // Grand total is used to compute percentages per category.
-    BigDecimal grand = sums.stream()
-        .map(row -> (BigDecimal) row[1])
-        .filter(Objects::nonNull)
-        .reduce(BigDecimal.ZERO, BigDecimal::add);
+    BigDecimal grand =
+        sums.stream()
+            .map(row -> (BigDecimal) row[1])
+            .filter(Objects::nonNull)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
 
     var categories = categoryRepo.findAllById(sums.stream().map(row -> (UUID) row[0]).toList());
     var byId = new HashMap<UUID, com.cmm.mit.domain.entity.Category>();
@@ -159,25 +160,27 @@ public class DashboardServiceImpl implements DashboardService {
     var items = new ArrayList<ByCategoryItem>();
     for (var row : sums) {
       UUID categoryId = (UUID) row[0];
-      BigDecimal total = zeroIfNull((BigDecimal) row[1]);
-      double pct = (grand.compareTo(BigDecimal.ZERO) == 0)
-          ? 0.0
-          : total.multiply(BigDecimal.valueOf(100)).divide(grand, 2, java.math.RoundingMode.HALF_UP).doubleValue();
+      BigDecimal total = BigDecimalUtils.zeroIfNull((BigDecimal) row[1]);
+      double pct =
+          (grand.compareTo(BigDecimal.ZERO) == 0)
+              ? 0.0
+              : total
+                  .multiply(BigDecimal.valueOf(100))
+                  .divide(grand, 2, java.math.RoundingMode.HALF_UP)
+                  .doubleValue();
 
-      items.add(new ByCategoryItem(
-          categoryMapper.toRef(byId.get(categoryId)),
-          total,
-          pct));
+      items.add(new ByCategoryItem(categoryMapper.toRef(byId.get(categoryId)), total, pct));
     }
 
     var response = new ByCategoryResponse(from, to, items);
-    log.info("DashboardService.expenseByCategory(...) end: items={}, grandTotal={}", items.size(), LogSanitizer.safe(grand));
+    log.info(
+        "DashboardService.expenseByCategory(...) end: items={}, grandTotal={}",
+        items.size(),
+        LogSanitizer.safe(grand));
     return response;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public DailyTrendResponse dailyExpenseTrend(LocalDate from, LocalDate to) {
     log.info("DashboardService.dailyExpenseTrend(from={}, to={}) start", from, to);
@@ -185,38 +188,40 @@ public class DashboardServiceImpl implements DashboardService {
     Instant fromInclusive = from.atStartOfDay(ZoneOffset.UTC).toInstant();
     Instant toExclusive = to.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
 
-    var points = txnRepo.dailyExpenseTrend(fromInclusive, toExclusive).stream()
-        .map(row -> new DailyPoint((LocalDate) row[0], zeroIfNull((BigDecimal) row[1])))
-        .toList();
+    var points =
+        txnRepo.dailyExpenseTrend(fromInclusive, toExclusive).stream()
+            .map(row -> new DailyPoint((LocalDate) row[0], BigDecimalUtils.zeroIfNull((BigDecimal) row[1])))
+            .toList();
 
     var response = new DailyTrendResponse(from, to, points);
     log.info("DashboardService.dailyExpenseTrend(...) end: points={}", points.size());
     return response;
   }
 
-  private static BigDecimal zeroIfNull(BigDecimal value) {
-    return value == null ? BigDecimal.ZERO : value;
-  }
-
-  private record AccountTotals(BigDecimal income, BigDecimal expense, BigDecimal transfersOut, BigDecimal transfersIn) {
+  private record AccountTotals(
+      BigDecimal income, BigDecimal expense, BigDecimal transfersOut, BigDecimal transfersIn) {
     private static AccountTotals empty() {
       return new AccountTotals(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
     }
 
     private AccountTotals addIncome(BigDecimal amount) {
-      return new AccountTotals(income.add(zeroIfNull(amount)), expense, transfersOut, transfersIn);
+      return new AccountTotals(
+          income.add(BigDecimalUtils.zeroIfNull(amount)), expense, transfersOut, transfersIn);
     }
 
     private AccountTotals addExpense(BigDecimal amount) {
-      return new AccountTotals(income, expense.add(zeroIfNull(amount)), transfersOut, transfersIn);
+      return new AccountTotals(
+          income, expense.add(BigDecimalUtils.zeroIfNull(amount)), transfersOut, transfersIn);
     }
 
     private AccountTotals addTransferOut(BigDecimal amount) {
-      return new AccountTotals(income, expense, transfersOut.add(zeroIfNull(amount)), transfersIn);
+      return new AccountTotals(
+          income, expense, transfersOut.add(BigDecimalUtils.zeroIfNull(amount)), transfersIn);
     }
 
     private AccountTotals addTransferIn(BigDecimal amount) {
-      return new AccountTotals(income, expense, transfersOut, transfersIn.add(zeroIfNull(amount)));
+      return new AccountTotals(
+          income, expense, transfersOut, transfersIn.add(BigDecimalUtils.zeroIfNull(amount)));
     }
   }
 }
